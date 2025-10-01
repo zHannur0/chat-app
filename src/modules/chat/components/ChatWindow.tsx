@@ -78,8 +78,8 @@ const ChatWindow = ({ selectedChat, setSelectedChat, isOpen, onClose, isMobile }
                         variants={isMobile ? mobileVariants as Variants : desktopVariants as Variants}
                  >
                     <ChatWindowHeader isMobile={isMobile} onClose={onClose} />
-                    <ChatHistory />
-                    <MessageInputForm />
+                    <ChatHistory chatId={selectedChat.id} />
+                    <MessageInputForm chatId={selectedChat.id} />
                  </motion.div>
             )}
 

@@ -3,6 +3,8 @@
 import { useEffect, useRef } from "react";
 import { groupMessagesByDate } from "@/shared/lib/utils";
 import { Message } from "@/modules/chat/types/types";
+import { useListMessagesQuery, useMarkReadMutation } from "@/modules/chat/api/chatApi";
+import { mapDtoMessageToUi } from "@/modules/chat/api/mappers";
 import DateDivider from "./DateDivider";
 import MessageItem from "./MessageItem";
 
@@ -197,18 +199,22 @@ export const mockMessages: Message[] = [
   ];
 
 
-const ChatHistory = () => {
+const ChatHistory = ({ chatId }: { chatId: string }) => {
     const bottomRef = useRef<HTMLDivElement>(null);
+    const { data } = useListMessagesQuery({ chatId, limit: 30 }, { skip: !chatId });
+    const [markRead] = useMarkReadMutation();
 
-    // useEffect(() => {
-    //     const timer = setTimeout(() => {
-    //         bottomRef.current?.scrollIntoView({ behavior: 'smooth' });
-    //     }, 300);      
-
-    //     return () => clearTimeout(timer);
-    // }, [mockMessages]);
+    useEffect(() => {
+        if (!chatId) return;
+        const timer = setTimeout(() => {
+            bottomRef.current?.scrollIntoView({ behavior: 'smooth' });
+            markRead({ chatId }).catch(() => {});
+        }, 300);
+        return () => clearTimeout(timer);
+    }, [chatId, data]);
       
-    const groupedMessages = groupMessagesByDate(mockMessages);
+    const messages: Message[] = (data?.messages || []).map(mapDtoMessageToUi);
+    const groupedMessages = groupMessagesByDate(messages.length ? messages : mockMessages);
 
     return (
         <div className="flex-1 overflow-y-auto bg-background-muted">

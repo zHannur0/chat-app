@@ -2,6 +2,8 @@
 
 import { formatTime } from "@/shared/lib/utils";
 import { Chat } from "../types/types";
+import { useListChatsQuery } from "@/modules/chat/api/chatApi";
+import { mapDtoChatToUi } from "@/modules/chat/api/mappers";
 
 interface Message {
     id: string;
@@ -70,10 +72,12 @@ const mockData: Chat[] = [
   }
   
   const ChatList = ({ selectedChat, setSelectedChat }: ChatListProps) => {
-    
+    const { data } = useListChatsQuery();
+    const list: Chat[] = data?.chats?.map(mapDtoChatToUi) ?? mockData;
+
     return (
         <div>
-            {mockData.map((chat) => (
+            {list.map((chat) => (
                 <div key={chat.id} 
                 className="w-full bg-background flex flex-col border-b border-border px-6 py-4 text-inverse"
                 onClick={() => setSelectedChat(chat)}

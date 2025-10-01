@@ -2,13 +2,16 @@
 
 import { Send } from "lucide-react";
 import { useRef, useState } from "react";
+import { useSendMessageMutation } from "@/modules/chat/api/chatApi";
 
-const MessageInputForm = () => {
+const MessageInputForm = ({ chatId }: { chatId: string }) => {
     const [message, setMessage] = useState('');
     const inputRef = useRef<HTMLTextAreaElement>(null);
+    const [sendMessage] = useSendMessageMutation();
   
-    const handleSend = () => {
+    const handleSend = async () => {
         if (message.trim()) {
+          try { await sendMessage({ chatId, text: message }).unwrap(); } catch {}
           setMessage('');
           inputRef.current?.focus();
         }

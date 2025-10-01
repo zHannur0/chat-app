@@ -29,8 +29,23 @@ To learn more about Next.js, take a look at the following resources:
 
 You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
 
-## Deploy on Vercel
+## Backend configuration (Firebase + Vertex AI)
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+Create `.env.local` with the following variables:
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+```
+FIREBASE_PROJECT_ID=
+FIREBASE_CLIENT_EMAIL=
+FIREBASE_PRIVATE_KEY="-----BEGIN PRIVATE KEY-----\n...\n-----END PRIVATE KEY-----\n"
+FIREBASE_WEB_API_KEY=
+VERTEX_LOCATION=us-central1
+VERTEX_MODEL=gemini-1.5-flash
+```
+
+Install backend dependencies:
+
+```
+npm i firebase-admin firebase @google-cloud/vertexai @google-cloud/tasks google-auth-library
+```
+
+API endpoints live under `src/app/api/**` and require Bearer `idToken` from Firebase Auth.

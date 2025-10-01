@@ -9,12 +9,20 @@
     "lint": "eslint"
   },
   "dependencies": {
+    "@google-cloud/tasks": "^6.2.0",
+    "@google-cloud/vertexai": "^1.10.0",
+    "@reduxjs/toolkit": "^2.9.0",
     "date-fns": "^4.1.0",
+    "firebase": "^12.3.0",
+    "firebase-admin": "^13.5.0",
     "framer-motion": "^12.23.22",
+    "google-auth-library": "^10.3.1",
     "lucide-react": "^0.544.0",
     "next": "15.5.4",
+    "next-redux-wrapper": "^8.1.0",
     "react": "19.1.0",
-    "react-dom": "19.1.0"
+    "react-dom": "19.1.0",
+    "react-redux": "^9.2.0"
   },
   "devDependencies": {
     "@eslint/eslintrc": "^3",
