@@ -6,6 +6,11 @@ import Image from "next/image";
 export const Header = () => {
     const router = useRouter();
 
+    const handleLogout = () => {
+        localStorage.removeItem('idToken');
+        router.push('/login');
+    }
+
     return (
         <header className="flex justify-between items-center bg-white border-b border-border text-inverse px-6 py-[18px] sticky top-0 left-0 right-0">
             <Image src="img/Logo.svg" alt="Logo" width={146} height={42} />
@@ -13,7 +18,9 @@ export const Header = () => {
                 <h2 className="text-lg font-medium">
                     Samurai Meow
                 </h2>  
-                <p className="opacity-50">
+                <p className="opacity-50" 
+                    onClick={handleLogout}
+                >
                     Logout
                 </p>
             </div>

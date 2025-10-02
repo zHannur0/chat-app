@@ -8,9 +8,19 @@ export const userApi = baseApi.injectEndpoints({
       query: ({ q }) => ({ url: `/api/users/search?q=${encodeURIComponent(q)}`, method: 'GET' }),
       providesTags: ['Auth'],
     }),
+    listUsers: build.query<{ users: UserSearchItem[]; nextCursor?: string }, { limit?: number; startAfterEmail?: string } | void>({
+      query: (args) => {
+        const limit = args?.limit ?? 20;
+        const startAfterEmail = args?.startAfterEmail;
+        const qs = new URLSearchParams({ limit: String(limit) });
+        if (startAfterEmail) qs.set('startAfterEmail', startAfterEmail);
+        return { url: `/api/users?${qs.toString()}`, method: 'GET' };
+      },
+      providesTags: ['Auth'],
+    }),
   }),
 });
 
-export const { useSearchUsersQuery } = userApi;
+export const { useSearchUsersQuery, useListUsersQuery } = userApi;
 
 

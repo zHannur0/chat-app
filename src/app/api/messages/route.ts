@@ -2,7 +2,8 @@ import { NextRequest, NextResponse } from 'next/server';
 export const runtime = 'nodejs';
 import { verifyBearerToken } from '@/server/auth/verifyToken';
 import { createMessage, listMessages, markRead } from '@/server/firestore/dao';
-import { MessageDoc } from '@/server/firestore/schema';
+import { ChatDoc, MessageDoc } from '@/server/firestore/schema';
+import { getChatById } from '@/server/firestore/dao';
 import { generateBotReply } from '@/server/bot/vertex';
 
 function sleep(ms: number) { return new Promise(res => setTimeout(res, ms)); }
@@ -25,14 +26,16 @@ export async function GET(req: NextRequest) {
 export async function POST(req: NextRequest) {
   try {
     const auth = await verifyBearerToken(req.headers.get('authorization') || undefined);
-    const { chatId, text, isBotChat, botId } = await req.json();
+    const { chatId, text } = await req.json();
     if (!chatId || !text) return NextResponse.json({ error: 'chatId and text required' }, { status: 400 });
     const now = Date.now();
     const msg: MessageDoc = { id: crypto.randomUUID(), chatId, senderId: auth.uid, text, createdAt: now };
     await createMessage(msg);
 
-    // For bot chats, schedule a delayed reply 1-5s
-    if (isBotChat && botId) {
+    // For bot chats, schedule a delayed reply 1-5s (auto-detect)
+    const chat: ChatDoc | undefined = await getChatById(chatId);
+    const botId = chat?.botId;
+    if (chat?.type === 'bot' && botId) {
       const delay = 1000 + Math.floor(Math.random() * 4000);
       // naive in-process delay; for production prefer Cloud Tasks
       sleep(delay).then(async () => {

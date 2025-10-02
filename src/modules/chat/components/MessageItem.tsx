@@ -7,7 +7,7 @@ interface MessageItemProps {
     isOwn: boolean;
 }
 
-const MessageItem = ({ message, isOwn }: MessageItemProps) => {
+const MessageItem = ({ message, isOwn }: MessageItemProps) => { 
     return (
         <div className={`flex ${isOwn ? 'justify-end' : 'justify-start'}`}>
             <div className={`

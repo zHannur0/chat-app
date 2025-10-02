@@ -19,7 +19,6 @@ export const metadata: Metadata = {
   keywords: 'messenger, chat, cloudmix, realtime',
   authors: [{ name: 'CloudMix Team' }],
   viewport: 'width=device-width, initial-scale=1, maximum-scale=1',
-  themeColor: '#8b5cf6',
 };
 
 export default function RootLayout({

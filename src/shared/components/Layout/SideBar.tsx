@@ -2,6 +2,7 @@ import ChatList from "@/modules/chat/components/ChatList";
 import { Chat } from "@/modules/chat/types/types";
 import { useDevice } from "@/shared/hooks/useDevice";
 import { AnimatePresence, Variants, motion } from "framer-motion";
+import UserSearch from "@/modules/users/components/UserSearch";
 
 interface SideBarProps {
     selectedChat: Chat | null;
@@ -32,6 +33,7 @@ export default function SideBar({ selectedChat, setSelectedChat, isOpen }: SideB
                  exit="hidden"
                  variants={isMobile ? sidebarVariants : {}}
                 >
+                <UserSearch />
                  <div className="bg-background-muted w-full p-6 border-b border-border">
                      <p className="text-inverse text-xl font-semibold">
                          Messages

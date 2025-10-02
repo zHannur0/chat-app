@@ -1,7 +1,9 @@
 export type UserDoc = {
   uid: string;
   email?: string;
+  emailLower?: string;
   displayName?: string;
+  displayNameLower?: string;
   photoURL?: string;
   createdAt: number;
   updatedAt: number;

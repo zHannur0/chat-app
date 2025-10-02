@@ -1,14 +1,111 @@
 import { NextRequest, NextResponse } from 'next/server';
 export const runtime = 'nodejs';
 import { verifyBearerToken } from '@/server/auth/verifyToken';
-import { addMembership, createChat, getChatById, listUserChats } from '@/server/firestore/dao';
-import { ChatDoc, ChatType, MembershipDoc } from '@/server/firestore/schema';
+import { addMembership, createChat, getChatById, membershipsCollection, messagesCollection, usersCollection, chatsCollection } from '@/server/firestore/dao';
+import { ChatDoc, ChatType, MembershipDoc, MessageDoc } from '@/server/firestore/schema';
+
+const BOT_ID = process.env.BOT_ID || 'bot:assistant';
+const BOT_NAME = process.env.BOT_NAME || 'AI Bot';
+const BOT_PHOTO = process.env.BOT_PHOTO || undefined;
 
 export async function GET(req: NextRequest) {
   try {
     const auth = await verifyBearerToken(req.headers.get('authorization') || undefined);
-    const chats = await listUserChats(auth.uid);
-    return NextResponse.json({ chats });
+    // memberships for current user
+    const mSnaps = await membershipsCollection().where('userId', '==', auth.uid).get();
+    const memberships = mSnaps.docs.map(d => d.data() as MembershipDoc);
+
+    // Ensure per-user bot chat exists (create if missing)
+    const hasBotChat = await (async () => {
+      const snaps = await chatsCollection()
+        .where('type', '==', 'bot')
+        .where('memberIds', 'array-contains', auth.uid)
+        .get();
+      return snaps.size > 0;
+    })();
+
+    if (!hasBotChat) {
+      const now = Date.now();
+      const chatId = crypto.randomUUID();
+      const botChat: ChatDoc = {
+        id: chatId,
+        type: 'bot' as ChatType,
+        title: BOT_NAME,
+        createdBy: auth.uid,
+        createdAt: now,
+        updatedAt: now,
+        memberIds: [auth.uid, BOT_ID],
+        botId: BOT_ID,
+      };
+      await createChat(botChat);
+      await addMembership({ chatId, userId: auth.uid, role: 'owner', joinedAt: now });
+      // optional: add a pseudo-membership for bot for completeness (not required by UI)
+      await addMembership({ chatId, userId: BOT_ID, role: 'member', joinedAt: now });
+      memberships.push({ chatId, userId: auth.uid, role: 'owner', joinedAt: now } as MembershipDoc);
+    }
+
+    const results: Array<ChatDoc & {
+      lastMessage?: MessageDoc;
+      unreadCount?: number;
+      peer?: { uid: string; displayName?: string; photoURL?: string; email?: string };
+    }> = [];
+    let totalUnread = 0;
+
+    for (const m of memberships) {
+      const chat = await getChatById(m.chatId);
+      if (!chat) continue;
+
+      // last message
+      const lastMsgSnap = await messagesCollection()
+        .where('chatId', '==', chat.id)
+        .orderBy('createdAt', 'desc')
+        .limit(1)
+        .get();
+      const lastMessage = lastMsgSnap.docs[0]?.data() as MessageDoc | undefined;
+
+      // unread count based on lastReadAt
+      const lastReadAt = (m as any).lastReadAt as number | undefined;
+      let unreadCount = 0;
+      if (lastReadAt) {
+        const unreadSnap = await messagesCollection()
+          .where('chatId', '==', chat.id)
+          .where('createdAt', '>', lastReadAt)
+          .get();
+        unreadCount = unreadSnap.size;
+      } else {
+        const unreadSnap = await messagesCollection()
+          .where('chatId', '==', chat.id)
+          .get();
+        unreadCount = unreadSnap.size;
+      }
+      totalUnread += unreadCount;
+
+      // peer info for direct/bot
+      let peer: { uid: string; displayName?: string; photoURL?: string; email?: string } | undefined;
+      if (chat.type === 'direct') {
+        const peerId = chat.memberIds.find(id => id !== auth.uid);
+        if (peerId) {
+          const uDoc = await usersCollection().doc(peerId).get();
+          const uData = uDoc.data() as any | undefined;
+          peer = { uid: peerId, displayName: uData?.displayName, photoURL: uData?.photoURL, email: uData?.email };
+        }
+      } else if (chat.type === 'bot') {
+        peer = { uid: chat.botId || BOT_ID, displayName: BOT_NAME, photoURL: BOT_PHOTO };
+      }
+
+      results.push({ ...chat, lastMessage, unreadCount, peer });
+    }
+
+    // Sort: bot chats first, then by last activity desc
+    results.sort((a, b) => {
+      if (a.type === 'bot' && b.type !== 'bot') return -1;
+      if (b.type === 'bot' && a.type !== 'bot') return 1;
+      const at = a.lastMessage?.createdAt || a.updatedAt || 0;
+      const bt = b.lastMessage?.createdAt || b.updatedAt || 0;
+      return bt - at;
+    });
+
+    return NextResponse.json({ chats: results, totalUnread });
   } catch (e) {
     return NextResponse.json({ error: 'Unauthorized', detail: String(e) }, { status: 401 });
   }
@@ -21,6 +118,20 @@ export async function POST(req: NextRequest) {
     const { type, memberIds, title, botId } = await req.json();
     if (!type || !Array.isArray(memberIds)) {
       return NextResponse.json({ error: 'type and memberIds required' }, { status: 400 });
+    }
+
+    // Prevent duplicate direct chats: if a direct chat between these two users exists, return it
+    if (type === 'direct') {
+      const peerId = Array.from(new Set(memberIds)).find(id => id !== auth.uid) || memberIds[0];
+      if (peerId) {
+        const existingSnaps = await chatsCollection().where('type', '==', 'direct').where('memberIds', 'array-contains', auth.uid).get();
+        const existing = existingSnaps.docs
+          .map(d => d.data() as ChatDoc)
+          .find(c => c.type === 'direct' && c.memberIds.length === 2 && c.memberIds.includes(peerId));
+        if (existing) {
+          return NextResponse.json({ chat: existing, existed: true });
+        }
+      }
     }
     const chatId = crypto.randomUUID();
     const chat: ChatDoc = {

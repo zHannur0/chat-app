@@ -14,20 +14,33 @@ export function mapDtoMessageToUi(dto: MessageDto) {
 }
 
 export function mapDtoChatToUi(dto: ChatDto): Chat {
-  const placeholderMessage = {
-    id: 'placeholder',
-    chatId: dto.id,
-    senderId: dto.createdBy,
-    content: '',
-    timestamp: new Date(dto.updatedAt || dto.createdAt),
-    isRead: true,
-    type: 'text' as const,
-  };
+  const last = dto.lastMessage
+    ? mapDtoMessageToUi({
+        id: dto.lastMessage.id,
+        chatId: dto.id,
+        senderId: dto.lastMessage.senderId,
+        text: dto.lastMessage.text,
+        createdAt: dto.lastMessage.createdAt,
+        updatedAt: dto.lastMessage.updatedAt,
+        isBot: dto.lastMessage.isBot,
+      } as MessageDto)
+    : {
+        id: 'placeholder',
+        chatId: dto.id,
+        senderId: dto.createdBy,
+        content: '',
+        timestamp: new Date(dto.updatedAt || dto.createdAt),
+        isRead: true,
+        type: 'text' as const,
+      };
+
+  const displayName = dto.peer?.displayName || dto.peer?.email || 'Chat';
+
   return {
     id: dto.id,
-    name: dto.title || 'Chat',
-    lastMessage: placeholderMessage,
-    unreadCount: 0,
+    name: displayName ,
+    lastMessage: last,
+    unreadCount: dto.unreadCount ?? 0,
     status: 'online',
     timestamp: new Date(dto.updatedAt || dto.createdAt),
   };

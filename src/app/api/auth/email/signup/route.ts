@@ -25,7 +25,9 @@ export async function POST(req: NextRequest) {
     const user: UserDoc = {
       uid: data.localId,
       email: data.email,
+      emailLower: (data.email || '').toLowerCase(),
       displayName: undefined,
+      displayNameLower: undefined,
       photoURL: undefined,
       createdAt: now,
       updatedAt: now,

@@ -1,5 +1,7 @@
 import { baseApi } from '@/shared/store/baseApi';
 
+export type ChatPeer = { uid: string; displayName?: string; photoURL?: string; email?: string };
+
 export type ChatDto = {
   id: string;
   type: 'direct' | 'group' | 'bot';
@@ -9,6 +11,17 @@ export type ChatDto = {
   updatedAt: number;
   memberIds: string[];
   botId?: string;
+  lastMessage?: {
+    id: string;
+    chatId: string;
+    senderId: string;
+    text: string;
+    createdAt: number;
+    updatedAt?: number;
+    isBot?: boolean;
+  };
+  unreadCount?: number;
+  peer?: ChatPeer;
 };
 
 export type MessageDto = {
@@ -27,7 +40,7 @@ export const chatsApi = baseApi.injectEndpoints({
       query: () => ({ url: '/api/chats', method: 'GET' }),
       providesTags: ['Chats'],
     }),
-    createChat: build.mutation<{ chat: ChatDto }, { type: 'direct' | 'group' | 'bot'; memberIds: string[]; title?: string; botId?: string }>({
+    createChat: build.mutation<{ chat: ChatDto; existed?: boolean }, { type: 'direct' | 'group' | 'bot'; memberIds: string[]; title?: string; botId?: string }>({
       query: (body) => ({ url: '/api/chats', method: 'POST', body }),
       invalidatesTags: ['Chats'],
     }),

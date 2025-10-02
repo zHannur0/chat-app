@@ -9,16 +9,29 @@ export async function GET(req: NextRequest) {
     await verifyBearerToken(req.headers.get('authorization') || undefined);
     const { searchParams } = new URL(req.url);
     const q = (searchParams.get('q') || '').toLowerCase();
-    if (!q || q.length < 2) return NextResponse.json({ users: [] });
+    if (!q || q.length < 1) return NextResponse.json({ users: [] });
 
-    // prefix search by email (lowercased)
+    // prefix search by email or display name (lowercased)
     const db = getFirestore();
-    const snaps = await db.collection('users')
-      .where('email', '>=', q)
-      .where('email', '<=', q + '\uf8ff')
-      .limit(20)
-      .get();
-    const users = snaps.docs.map(d => ({ uid: d.id, ...(d.data() as any) }));
+    const [byEmail, byName] = await Promise.all([
+      db.collection('users')
+        .orderBy('emailLower')
+        .startAt(q)
+        .endAt(q + '\\uf8ff')
+        .limit(20)
+        .get(),
+      db.collection('users')
+        .orderBy('displayNameLower')
+        .startAt(q)
+        .endAt(q + '\\uf8ff')
+        .limit(20)
+        .get(),
+    ]);
+    const mapDoc = (d: any) => ({ uid: d.id, ...(d.data() as any) });
+    const merged = new Map<string, any>();
+    byEmail.docs.forEach(d => merged.set(d.id, mapDoc(d)));
+    byName.docs.forEach(d => merged.set(d.id, mapDoc(d)));
+    const users = Array.from(merged.values()).slice(0, 20);
     return NextResponse.json({ users });
   } catch (e) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
