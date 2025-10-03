@@ -14,6 +14,8 @@ import { useVerifyQuery } from "@/modules/auth/api/authApi";
 const ChatHistory = ({ chatId }: { chatId: string }) => {
     const bottomRef = useRef<HTMLDivElement>(null);
     const [rtMessages, setRtMessages] = useState<Message[]>([]);
+    const [isBotTyping, setIsBotTyping] = useState(false);
+    const typingTimeoutRef = useRef<NodeJS.Timeout | null>(null);
     const { data } = useListMessagesQuery({ chatId, limit: 30 }, { skip: !chatId });
     const { data: user } = useVerifyQuery();
     const [markRead] = useMarkReadMutation();
@@ -53,10 +55,39 @@ const ChatHistory = ({ chatId }: { chatId: string }) => {
                     type: 'text',
                 } as Message;
             });
+            // If a new bot message arrived – stop typing indicator
+            const hasNewBotMessage = snap.docChanges().some((ch) => {
+                const v = ch.doc.data() as any;
+                return ch.type === 'added' && v.isBot === true && v.chatId === chatId;
+            });
+            if (hasNewBotMessage) {
+                setIsBotTyping(false);
+                if (typingTimeoutRef.current) {
+                    clearTimeout(typingTimeoutRef.current);
+                    typingTimeoutRef.current = null;
+                }
+            }
             setRtMessages(items);
         });
         return () => unsub();
     }, [chatId, user?.uid]);
+
+    // Listen for client-side event to start typing indicator
+    useEffect(() => {
+        const onTyping = (e: Event) => {
+            const ev = e as CustomEvent<{ chatId: string }>;
+            if (!ev?.detail?.chatId || ev.detail.chatId !== chatId) return;
+            setIsBotTyping(true);
+            // Safety timeout (10s) in case reply fails
+            if (typingTimeoutRef.current) clearTimeout(typingTimeoutRef.current);
+            typingTimeoutRef.current = setTimeout(() => {
+                setIsBotTyping(false);
+                typingTimeoutRef.current = null;
+            }, 10000);
+        };
+        window.addEventListener('bot-typing', onTyping as EventListener);
+        return () => window.removeEventListener('bot-typing', onTyping as EventListener);
+    }, [chatId]);
 
     useEffect(() => {
         if (!chatId) return;
@@ -65,12 +96,12 @@ const ChatHistory = ({ chatId }: { chatId: string }) => {
             markRead({ chatId }).catch(() => {});
         }, 300);
         return () => clearTimeout(timer);
-    }, [chatId]);
+    }, [chatId, rtMessages]);
       
     const apiMessages: Message[] = (data?.messages || []).map(mapDtoMessageToUi);
     const messages: Message[] = rtMessages.length ? rtMessages : apiMessages;
     const groupedMessages = groupMessagesByDate(messages.length ? messages : []);
-    
+
     return (
         <div className="flex-1 overflow-y-auto bg-background-muted w-full">
             <div className="mx-auto p-6 w-full">
@@ -81,6 +112,9 @@ const ChatHistory = ({ chatId }: { chatId: string }) => {
                             {messages.map((message) => (
                                 <MessageItem key={message.id} message={message} isOwn={message.senderId === user?.uid} />
                             ))}
+                            {isBotTyping && (
+                                <div className="text-sm text-inverse/60">AI Bot is typing…</div>
+                            )}
                         </div>
                        
                     </div>

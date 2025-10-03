@@ -3,6 +3,7 @@ export const runtime = 'nodejs';
 import { verifyBearerToken } from '@/server/auth/verifyToken';
 import { createMessage, listMessages, markRead } from '@/server/firestore/dao';
 import { ChatDoc, MessageDoc } from '@/server/firestore/schema';
+const BOT_NAME = process.env.BOT_NAME || 'AI Bot';
 import { getChatById } from '@/server/firestore/dao';
 import { generateBotReply } from '@/server/bot/vertex';
 
@@ -34,14 +35,24 @@ export async function POST(req: NextRequest) {
 
     // For bot chats, schedule a delayed reply 1-5s (auto-detect)
     const chat: ChatDoc | undefined = await getChatById(chatId);
-    const botId = chat?.botId;
-    if (chat?.type === 'bot' && botId) {
+    const envBotId = process.env.BOT_ID || 'bot:assistant';
+    const botId = chat?.botId || envBotId;
+    if (chat?.type === 'bot') {
+      // Backfill botId on chat if missing
+      if (!chat.botId && botId) {
+        try { await (await import('@/server/firestore/dao')).chatsCollection().doc(chatId).set({ botId }, { merge: true }); } catch {}
+      }
+      // Generate reply asynchronously with delay, do not block client response
       const delay = 1000 + Math.floor(Math.random() * 4000);
-      // naive in-process delay; for production prefer Cloud Tasks
       sleep(delay).then(async () => {
-        const replyText = await generateBotReply(text);
-        const reply: MessageDoc = { id: crypto.randomUUID(), chatId, senderId: botId, text: replyText, createdAt: Date.now(), isBot: true };
-        await createMessage(reply);
+        try {
+          const replyText = await generateBotReply(text);
+          const reply: MessageDoc = { id: crypto.randomUUID(), chatId, senderId: botId, text: replyText, createdAt: Date.now(), isBot: true };
+          await createMessage(reply);
+        } catch (err) {
+          // Swallow rate-limit or other errors; no fallback message per requirement
+          console.error('Bot reply failed:', err);
+        }
       }).catch(() => {});
     }
 

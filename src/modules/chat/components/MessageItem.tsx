@@ -1,6 +1,7 @@
 import { Message } from "../types/types";
 import { Check, CheckCheck } from 'lucide-react';
 import { formatTimeShort } from "@/shared/lib/utils";
+import { motion } from "framer-motion";
 
 interface MessageItemProps {
     message: Message;
@@ -9,7 +10,11 @@ interface MessageItemProps {
 
 const MessageItem = ({ message, isOwn }: MessageItemProps) => { 
     return (
-        <div className={`flex ${isOwn ? 'justify-end' : 'justify-start'}`}>
+        <motion.div
+        initial={{ opacity: 0, transform: "translateY(10px) scale(0.95)" }}
+        animate={{ opacity: 1, transform: "translateY(0) scale(1)" }}
+        transition={{ duration: 0.2, ease: "easeOut" }}
+        className={`flex ${isOwn ? 'justify-end' : 'justify-start'}`}>
             <div className={`
                 max-w-[70%] px-6 py-3 rounded-2xl
                 ${isOwn 
@@ -37,7 +42,7 @@ const MessageItem = ({ message, isOwn }: MessageItemProps) => {
                 </div>
                 
              </div>
-        </div>
+        </motion.div>
     )
 }
 

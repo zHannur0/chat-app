@@ -50,6 +50,7 @@ export async function getChatById(chatId: string) {
 }
 
 export async function createMessage(msg: MessageDoc) {
+  console.log(msg);
   await messagesCollection().doc(msg.id).set(msg);
 }
 

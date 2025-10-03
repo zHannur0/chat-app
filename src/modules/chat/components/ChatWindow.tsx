@@ -1,13 +1,13 @@
 import ChatWindowHeader from "./ChatWindowHeader";
 import ChatHistory from "./ChatHistory";
 import MessageInputForm from "./MessageInputForm";
-import { Chat } from "../types/types";
 import { AnimatePresence, motion, Variants } from "framer-motion";
+import { ChatDto } from "@/modules/chat/api/chatApi";
 
 
 interface ChatWindowProps {
-    selectedChat: Chat | null;
-    setSelectedChat: (chat: Chat | null) => void;
+    selectedChat: ChatDto | null;
+    setSelectedChat: (chat: ChatDto | null) => void;
     isOpen: boolean;
     onClose: () => void;
     isMobile: boolean;
@@ -49,7 +49,6 @@ const desktopVariants = {
 
 
 const ChatWindow = ({ selectedChat, setSelectedChat, isOpen, onClose, isMobile }: ChatWindowProps) => {
-
     if (!selectedChat && !isMobile) {
         return (
             <div className="flex-1 flex items-center justify-center bg-white">
@@ -77,7 +76,7 @@ const ChatWindow = ({ selectedChat, setSelectedChat, isOpen, onClose, isMobile }
                         exit="hidden"
                         variants={isMobile ? mobileVariants as Variants : desktopVariants as Variants}
                  >
-                    <ChatWindowHeader isMobile={isMobile} onClose={onClose} />
+                    <ChatWindowHeader isMobile={isMobile} onClose={onClose} chat={selectedChat} />
                     <ChatHistory chatId={selectedChat.id} />
                     <MessageInputForm chatId={selectedChat.id} />
                  </motion.div>

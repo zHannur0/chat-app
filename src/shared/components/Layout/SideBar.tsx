@@ -1,12 +1,12 @@
 import ChatList from "@/modules/chat/components/ChatList";
-import { Chat } from "@/modules/chat/types/types";
+import { ChatDto } from "@/modules/chat/api/chatApi";
 import { useDevice } from "@/shared/hooks/useDevice";
 import { AnimatePresence, Variants, motion } from "framer-motion";
 import UserSearch from "@/modules/users/components/UserSearch";
 
 interface SideBarProps {
-    selectedChat: Chat | null;
-    setSelectedChat: (chat: Chat | null) => void;
+    selectedChat: ChatDto | null;
+    setSelectedChat: (chat: ChatDto | null) => void;
     isOpen: boolean;
 }
 

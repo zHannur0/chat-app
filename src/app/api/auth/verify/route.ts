@@ -29,8 +29,6 @@ export async function GET(req: NextRequest) {
       } catch {}
       const user: UserDoc = {
         uid: decoded.uid,
-        email: decoded.email || undefined,
-        emailLower: (decoded.email || '').toLowerCase(),
         displayName,
         displayNameLower: (displayName || '').toLowerCase(),
         photoURL,

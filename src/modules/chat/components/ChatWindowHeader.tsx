@@ -1,11 +1,13 @@
-import { Chat } from "../types/types";
+import { ChatDto } from "@/modules/chat/api/chatApi";
 
 interface ChatWindowHeaderProps {
     isMobile: boolean;
     onClose: () => void;
+    chat: ChatDto;
 }
 
-const ChatWindowHeader = ({ isMobile, onClose }: ChatWindowHeaderProps) => {
+const ChatWindowHeader = ({ isMobile, onClose, chat }: ChatWindowHeaderProps) => {
+
     return (
         <div className="flex items-start bg-background w-full px-6 py-2 border-b border-border text-inverse gap-2">
             {isMobile && 
@@ -13,7 +15,7 @@ const ChatWindowHeader = ({ isMobile, onClose }: ChatWindowHeaderProps) => {
             }
             <div className="flex flex-col">
                 <h3 className="text-lg font-medium">
-                    Aslan
+                    {chat.type === 'direct' ? (chat.peer?.displayName || chat.peer?.email) : chat.title}
                 </h3>
                 <p className="opacity-50">Online</p>
             </div>

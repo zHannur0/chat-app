@@ -12,6 +12,8 @@ const MessageInputForm = ({ chatId }: { chatId: string }) => {
     const handleSend = async () => {
         if (message.trim()) {
           try { await sendMessage({ chatId, text: message }).unwrap(); } catch {}
+        // Notify ChatHistory to show typing indicator for bot chats
+        window.dispatchEvent(new CustomEvent('bot-typing', { detail: { chatId } }));
           setMessage('');
           inputRef.current?.focus();
         }
