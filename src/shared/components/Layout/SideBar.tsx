@@ -1,3 +1,4 @@
+"use client"
 import ChatList from "@/modules/chat/components/ChatList";
 import { ChatDto } from "@/modules/chat/api/chatApi";
 import { useDevice } from "@/shared/hooks/useDevice";
@@ -5,8 +6,6 @@ import { AnimatePresence, Variants, motion } from "framer-motion";
 import UserSearch from "@/modules/users/components/UserSearch";
 
 interface SideBarProps {
-    selectedChat: ChatDto | null;
-    setSelectedChat: (chat: ChatDto | null) => void;
     isOpen: boolean;
 }
 
@@ -21,7 +20,7 @@ const sidebarVariants: Variants = {
     }
 };
 
-export default function SideBar({ selectedChat, setSelectedChat, isOpen }: SideBarProps) {
+export default function SideBar({ isOpen }: SideBarProps) {
     const { isMobile } = useDevice();
 
     return (
@@ -39,7 +38,7 @@ export default function SideBar({ selectedChat, setSelectedChat, isOpen }: SideB
                          Messages
                      </p>
                  </div>
-                 <ChatList selectedChat={selectedChat} setSelectedChat={setSelectedChat} />
+                 <ChatList />
              </motion.div>                    
             )}
         </AnimatePresence>

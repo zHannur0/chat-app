@@ -4,6 +4,7 @@ type SignEmailPayload = { email: string; password: string };
 type SignResponse = { idToken: string; refreshToken: string; localId: string };
 
 export const authApi = baseApi.injectEndpoints({
+  overrideExisting: true,
   endpoints: (build) => ({
     signUpEmail: build.mutation<SignResponse, SignEmailPayload>({
       query: (body) => ({ url: '/api/auth/email/signup', method: 'POST', body }),
@@ -17,7 +18,7 @@ export const authApi = baseApi.injectEndpoints({
       query: (body) => ({ url: '/api/auth/google', method: 'POST', body }),
       invalidatesTags: ['Auth'],
     }),
-    verify: build.query<{ uid: string; email?: string; emailVerified?: boolean }, void>({
+    verify: build.query<{ uid: string; email?: string; emailVerified?: boolean; displayName?: string; photoURL?: string }, void>({
       query: () => ({ url: '/api/auth/verify', method: 'GET' }),
       providesTags: ['Auth'],
     }),

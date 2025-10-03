@@ -15,7 +15,7 @@ const ChatWindowHeader = ({ isMobile, onClose, chat }: ChatWindowHeaderProps) =>
             }
             <div className="flex flex-col">
                 <h3 className="text-lg font-medium">
-                    {chat.type === 'direct' ? (chat.peer?.displayName || chat.peer?.email) : chat.title}
+                    {chat.type === 'direct' ? (chat.peer?.displayName || (chat as any)?.peer?.username || 'Direct chat') : (chat.title || 'Group chat')}
                 </h3>
                 <p className="opacity-50">Online</p>
             </div>

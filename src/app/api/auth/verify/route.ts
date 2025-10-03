@@ -18,10 +18,16 @@ export async function GET(req: NextRequest) {
     // Backfill user doc if missing
     const db = getFirestore();
     const doc = await db.collection('users').doc(decoded.uid).get();
-    if (!doc.exists) {
+    let displayName: string | undefined;
+    let photoURL: string | undefined;
+    if (doc.exists) {
+      const data = doc.data() as any;
+      displayName = data?.displayName;
+      photoURL = data?.photoURL;
+    } else {
       const now = Date.now();
-      let displayName: string | undefined = (decoded as any)?.name;
-      let photoURL: string | undefined = (decoded as any)?.picture;
+      displayName = (decoded as any)?.name;
+      photoURL = (decoded as any)?.picture;
       try {
         const userRecord = await adminAuth.getUser(decoded.uid);
         displayName = userRecord.displayName || displayName;
@@ -38,7 +44,7 @@ export async function GET(req: NextRequest) {
       await upsertUser(user);
     }
 
-    return NextResponse.json({ uid: decoded.uid, email: decoded.email, emailVerified: decoded.email_verified === true });
+    return NextResponse.json({ uid: decoded.uid, email: decoded.email, emailVerified: decoded.email_verified === true, displayName, photoURL });
   } catch (e) {
     return NextResponse.json({ error: 'Invalid token' }, { status: 401 });
   }

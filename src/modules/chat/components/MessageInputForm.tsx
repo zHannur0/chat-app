@@ -1,6 +1,5 @@
 'use client'
 
-import { Send } from "lucide-react";
 import { useRef, useState } from "react";
 import { useSendMessageMutation } from "@/modules/chat/api/chatApi";
 
@@ -12,7 +11,6 @@ const MessageInputForm = ({ chatId }: { chatId: string }) => {
     const handleSend = async () => {
         if (message.trim()) {
           try { await sendMessage({ chatId, text: message }).unwrap(); } catch {}
-        // Notify ChatHistory to show typing indicator for bot chats
         window.dispatchEvent(new CustomEvent('bot-typing', { detail: { chatId } }));
           setMessage('');
           inputRef.current?.focus();
@@ -46,9 +44,11 @@ const MessageInputForm = ({ chatId }: { chatId: string }) => {
                 />
             </div>
             <button>
-                <Send className="w-5 h-5" 
-                    onClick={handleSend}
-                />
+                {message ? (
+                    <img src="/icons/sendActive.svg" alt="typing" className="w-5 h-5" />
+                ) : (
+                    <img src="/icons/send.svg" alt="send" className="w-5 h-5" />
+                )}
             </button>
         </div>
     )

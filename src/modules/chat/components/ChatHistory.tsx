@@ -10,6 +10,7 @@ import { collection, getFirestore, onSnapshot, orderBy, query, where } from "fir
 import DateDivider from "./DateDivider";
 import MessageItem from "./MessageItem";
 import { useVerifyQuery } from "@/modules/auth/api/authApi";
+import ChatHistorySkeleton from './ChatHistorySkeleton';
 
 const ChatHistory = ({ chatId }: { chatId: string }) => {
     const bottomRef = useRef<HTMLDivElement>(null);
@@ -98,6 +99,9 @@ const ChatHistory = ({ chatId }: { chatId: string }) => {
         return () => clearTimeout(timer);
     }, [chatId, rtMessages]);
       
+    if (!rtMessages.length && !data?.messages) {
+        return <ChatHistorySkeleton />;
+    }
     const apiMessages: Message[] = (data?.messages || []).map(mapDtoMessageToUi);
     const messages: Message[] = rtMessages.length ? rtMessages : apiMessages;
     const groupedMessages = groupMessagesByDate(messages.length ? messages : []);

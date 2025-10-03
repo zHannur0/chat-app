@@ -25,7 +25,7 @@ export const Header = () => {
             />
             <div className="flex flex-col gap-1 items-end ">
                 <h2 className="text-lg font-medium">
-                    {user?.email}
+                    {user?.displayName || user?.email}
                 </h2>  
                 <p className="opacity-50" 
                     onClick={handleLogout}

@@ -8,6 +8,8 @@ import { getFirebaseApp } from '@/modules/auth/lib/firebaseClient';
 import { collection, getFirestore, onSnapshot, query, where } from 'firebase/firestore';
 import { useVerifyQuery } from '@/modules/auth/api/authApi';
 import { mapDtoChatToUi } from "@/modules/chat/api/mappers";
+import { useRouter } from 'next/navigation';
+import ChatListSkeleton from './ChatListSkeleton';
 
 interface Message {
     id: string;
@@ -18,13 +20,11 @@ interface Message {
     type: string;
 }
 
-  interface ChatListProps {
-    selectedChat: ChatDto | null;
-    setSelectedChat: (chat: ChatDto | null) => void;
-  }
+  interface ChatListProps {}
   
-  const ChatList = ({ selectedChat, setSelectedChat }: ChatListProps) => {
-    const { data, refetch } = useListChatsQuery(undefined, { refetchOnFocus: true, refetchOnReconnect: true });
+  const ChatList = ({}: ChatListProps) => {
+    const router = useRouter();
+    const { data, refetch, isLoading } = useListChatsQuery(undefined, { refetchOnFocus: true, refetchOnReconnect: true });
     const { data: user } = useVerifyQuery();
 
     useEffect(() => {
@@ -38,12 +38,14 @@ interface Message {
       return () => unsub();
     }, [user?.uid, refetch]);
 
+    if (isLoading) return <ChatListSkeleton />;
+
     return (
         <div>
             {data?.chats?.map((chat) => (
                 <div key={chat.id} 
                 className="w-full bg-background flex flex-col border-b border-border px-6 py-4 text-inverse"
-                onClick={() => setSelectedChat(chat)}
+                onClick={() => router.push(`/chat?chat=${encodeURIComponent(chat.id)}`)}
                 >
                     <div className="w-full flex justify-between items-center">
                         <h1 className="text-lg font-medium">{chat.type === 'direct' ? (chat.peer?.displayName || chat.peer?.email) : chat.title}</h1>
