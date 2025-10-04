@@ -32,6 +32,7 @@ const InfiniteScrollMessages = ({
   const topSentinelRef = useRef<HTMLDivElement>(null);
   const bottomRef = useRef<HTMLDivElement>(null);
   const prevMessageCountRef = useRef(0);
+  const prevRealtimeCountRef = useRef(0);
   const { data: user } = useVerifyQuery();
   const { queue } = useSendMessage();
   const [realtimeMessages, setRealtimeMessages] = useState<Message[]>([]);
@@ -119,17 +120,62 @@ const InfiniteScrollMessages = ({
     return () => observer.disconnect();
   }, [hasMore, isLoadingMore, loadMore]);
 
+  // Auto-scroll for initial load and new real-time messages
   useEffect(() => {
     if (bottomRef.current && allMessages.length > 0) {
-      bottomRef.current.scrollIntoView({ behavior: "smooth" });
+      // Auto-scroll on initial load (when messages first appear)
+      const isInitialLoad =
+        prevMessageCountRef.current === 0 && allMessages.length > 0;
 
-      if (allMessages.length > prevMessageCountRef.current) {
-        console.log("📱 New message detected, calling onScrollToBottom");
+      // Auto-scroll for new real-time messages
+      const hasNewRealtimeMessages =
+        realtimeMessages.length > prevRealtimeCountRef.current;
+
+      if (isInitialLoad || hasNewRealtimeMessages) {
+        console.log("📱 Auto-scrolling to bottom:", {
+          isInitialLoad,
+          hasNewRealtimeMessages,
+        });
+        bottomRef.current.scrollIntoView({ behavior: "smooth" });
         handleScrollToBottom();
       }
-      prevMessageCountRef.current = allMessages.length;
+
+      prevRealtimeCountRef.current = realtimeMessages.length;
     }
-  }, [allMessages.length, handleScrollToBottom]);
+  }, [allMessages.length, realtimeMessages.length, handleScrollToBottom]);
+
+  // Update total message count for tracking
+  useEffect(() => {
+    prevMessageCountRef.current = allMessages.length;
+  }, [allMessages.length]);
+
+  // Maintain scroll position when loading older messages (pagination)
+  useEffect(() => {
+    if (isLoadingMore && containerRef.current) {
+      // When loading more messages, maintain scroll position
+      const container = containerRef.current;
+      const currentScrollTop = container.scrollTop;
+      const currentScrollHeight = container.scrollHeight;
+
+      // After new messages are added, adjust scroll to maintain position
+      if (typeof window !== "undefined") {
+        window.requestAnimationFrame(() => {
+          const newScrollHeight = container.scrollHeight;
+          const heightDifference = newScrollHeight - currentScrollHeight;
+          container.scrollTop = currentScrollTop + heightDifference;
+        });
+      }
+    }
+  }, [isLoadingMore]);
+
+  // Ensure chat starts at bottom on initial load
+  useEffect(() => {
+    if (!isLoading && allMessages.length > 0 && containerRef.current) {
+      // Force scroll to bottom on initial load
+      const container = containerRef.current;
+      container.scrollTop = container.scrollHeight;
+    }
+  }, [isLoading, allMessages.length]);
 
   if (isLoading) {
     return <ChatHistorySkeleton />;

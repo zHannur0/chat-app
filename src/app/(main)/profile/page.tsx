@@ -45,14 +45,14 @@ export default function ProfilePage() {
             placeholder="Your name"
           />
         </div>
-        <div>
+        {/* <div>
           <label className="block text-sm text-gray-600 mb-1">Photo URL</label>
           <Input
             value={photoURL}
             onChange={e => setPhotoURL(e.target.value)}
             placeholder="https://..."
           />
-        </div>
+        </div> */}
         <div className="pt-2">
           <Button onClick={onSave} disabled={saving || isLoading}>
             Save

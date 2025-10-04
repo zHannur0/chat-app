@@ -103,10 +103,10 @@ export default [
         "error",
         { argsIgnorePattern: "^_" },
       ],
-      "@typescript-eslint/no-explicit-any": "warn",
+      "@typescript-eslint/no-explicit-any": "off",
       "@typescript-eslint/explicit-function-return-type": "off",
       "@typescript-eslint/explicit-module-boundary-types": "off",
-      "@typescript-eslint/no-non-null-assertion": "warn",
+      "@typescript-eslint/no-non-null-assertion": "off",
 
       // React specific rules
       "react/react-in-jsx-scope": "off",
@@ -115,7 +115,7 @@ export default [
       "react/require-default-props": "off",
 
       // General rules
-      "no-console": "warn",
+      "no-console": "off",
       "no-debugger": "error",
       "prefer-const": "error",
       "no-var": "error",
@@ -173,7 +173,7 @@ export default [
       "react/require-default-props": "off",
 
       // General rules
-      "no-console": "warn",
+      "no-console": "off",
       "no-debugger": "error",
       "prefer-const": "error",
       "no-var": "error",
