@@ -1,24 +1,13 @@
 'use client'
 
 import { formatTime } from "@/shared/lib/utils";
-import { ChatDto } from "@/modules/chat/api/chatApi";
 import { useListChatsQuery } from "@/modules/chat/api/chatApi";
 import { useEffect } from 'react';
 import { getFirebaseApp } from '@/modules/auth/lib/firebaseClient';
 import { collection, getFirestore, onSnapshot, query, where } from 'firebase/firestore';
 import { useVerifyQuery } from '@/modules/auth/api/authApi';
-import { mapDtoChatToUi } from "@/modules/chat/api/mappers";
 import { useRouter } from 'next/navigation';
 import ChatListSkeleton from './ChatListSkeleton';
-
-interface Message {
-    id: string;
-    content: string;
-    senderId: string;
-    timestamp: Date;
-    isRead: boolean;
-    type: string;
-}
 
   interface ChatListProps {}
   
@@ -43,23 +32,31 @@ interface Message {
     return (
         <div>
             {data?.chats?.map((chat) => (
-                <div key={chat.id} 
-                className="w-full bg-background flex flex-col border-b border-border px-6 py-4 text-inverse"
-                onClick={() => router.push(`/chat?chat=${encodeURIComponent(chat.id)}`)}
-                >
-                    <div className="w-full flex justify-between items-center">
-                        <h1 className="text-lg font-medium">{chat.type === 'direct' ? (chat.peer?.displayName || chat.peer?.email) : chat.title}</h1>
-                        {
-                          (chat.unreadCount ?? 0) > 0 && (
-                            <p className="opacity-50 rounded-full bg-primary text-white flex items-center justify-center w-6 h-6">{chat.unreadCount}</p>
-                          )
-                        }
-                    </div>
-                    <div className="w-full flex justify-between items-center">
-                        <p className="opacity-50">{chat.lastMessage?.text}</p>
-                        <p className="opacity-50">{formatTime(new Date(chat.updatedAt || chat.createdAt))}</p>
-                    </div>
-                </div>
+               <div key={chat.id} 
+               className="w-full bg-background flex flex-col border-b border-border px-6 py-4 text-inverse cursor-pointer hover:bg-background-muted transition-colors"
+               onClick={() => router.push(`/chat?chat=${encodeURIComponent(chat.id)}`)}
+               >
+                   <div className="w-full flex justify-between items-center gap-2 mb-1">
+                       <h1 className="text-lg font-medium truncate flex-1">
+                           {chat.type === 'direct' ? (chat.peer?.displayName || chat.peer?.email) : chat.title}
+                       </h1>
+                       {
+                         (chat.unreadCount ?? 0) > 0 && (
+                           <p className="opacity-50 rounded-full bg-primary text-white flex items-center justify-center w-6 h-6 flex-shrink-0 text-sm">
+                               {chat.unreadCount}
+                           </p>
+                         )
+                       }
+                   </div>
+                   <div className="w-full flex justify-between items-center gap-2">
+                       <p className="opacity-50 truncate flex-1">
+                           {chat.lastMessage?.text}
+                       </p>
+                       <p className="opacity-50 whitespace-nowrap text-sm flex-shrink-0">
+                           {formatTime(new Date(chat.updatedAt || chat.createdAt))}
+                       </p>
+                   </div>
+               </div>
             ))}
         </div>
     )

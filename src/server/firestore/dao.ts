@@ -62,8 +62,40 @@ export async function listMessages(chatId: string, limit: number, beforeTs?: num
 }
 
 export async function markRead(chatId: string, userId: string, timestamp: number) {
+  console.log('🔖 markRead called:', { chatId, userId, timestamp });
+  
+  // Update membership
   const key = `${chatId}_${userId}`;
   await membershipsCollection().doc(key).set({ lastReadAt: timestamp }, { merge: true });
+  
+  // Update readBy in all unread messages for this chat
+  const messagesSnap = await messagesCollection()
+    .where('chatId', '==', chatId)
+    .where('senderId', '!=', userId) // Only messages from others
+    .get();
+  
+  console.log(`📝 Found ${messagesSnap.docs.length} messages to mark as read`);
+  
+  const batch = getFirestore().batch();
+  messagesSnap.docs.forEach(doc => {
+    const data = doc.data();
+    const readBy = data.readBy || {};
+    
+    // Add the reader (userId) to readBy, not the sender
+    readBy[userId] = timestamp;
+    
+    console.log(`📖 Marking message ${doc.id} as read by ${userId}:`, { 
+      senderId: data.senderId, 
+      readBy: readBy 
+    });
+    
+    batch.update(doc.ref, { readBy });
+  });
+  
+  if (messagesSnap.docs.length > 0) {
+    await batch.commit();
+    console.log(`✅ Updated readBy for ${messagesSnap.docs.length} messages`);
+  }
 }
 
 

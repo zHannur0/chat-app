@@ -8,7 +8,6 @@ export const Header = () => {
     const router = useRouter();
     const { data: user, isLoading, isError } = useVerifyQuery();
 
-
     const handleLogout = () => {
         localStorage.removeItem('idToken');
         router.push('/login');
@@ -24,10 +23,12 @@ export const Header = () => {
                 className="cursor-pointer"
             />
             <div className="flex flex-col gap-1 items-end ">
-                <h2 className="text-lg font-medium">
+                <h2 className="text-lg font-medium cursor-pointer" 
+                    onClick={() => router.push('/profile')}
+                >
                     {user?.displayName || user?.email}
                 </h2>  
-                <p className="opacity-50" 
+                <p className="opacity-50 cursor-pointer" 
                     onClick={handleLogout}
                 >
                     Logout

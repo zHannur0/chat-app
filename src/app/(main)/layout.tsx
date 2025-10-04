@@ -31,8 +31,8 @@ export default function MainLayout({ children }: { children: React.ReactNode }) 
     return (
         <div>
             <Header />
-            <AnimatePresence mode="wait">
-                {!isLoading && user ? (
+            {/* <AnimatePresence mode="wait">
+                {!isLoading && user ? ( */}
                     <motion.div
                         key={viewKey}
                         initial={{ opacity: 0, y: 6 }}
@@ -42,8 +42,8 @@ export default function MainLayout({ children }: { children: React.ReactNode }) 
                     >
                         {children}
                     </motion.div>
-                ) : null}
-            </AnimatePresence>
+                {/* ) : null} */}
+            {/* </AnimatePresence> */}
         </div>
     )
 }

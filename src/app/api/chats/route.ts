@@ -69,12 +69,14 @@ export async function GET(req: NextRequest) {
       if (lastReadAt) {
         const unreadSnap = await messagesCollection()
           .where('chatId', '==', chat.id)
+          .where('senderId', '!=', auth.uid)
           .where('createdAt', '>', lastReadAt)
           .get();
         unreadCount = unreadSnap.size;
       } else {
         const unreadSnap = await messagesCollection()
           .where('chatId', '==', chat.id)
+          .where('senderId', '!=', auth.uid)
           .get();
         unreadCount = unreadSnap.size;
       }

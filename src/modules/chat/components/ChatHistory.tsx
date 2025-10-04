@@ -11,6 +11,7 @@ import DateDivider from "./DateDivider";
 import MessageItem from "./MessageItem";
 import { useVerifyQuery } from "@/modules/auth/api/authApi";
 import ChatHistorySkeleton from './ChatHistorySkeleton';
+import { useSendMessage } from "@/modules/chat/hooks/useSendMessage";
 
 const ChatHistory = ({ chatId }: { chatId: string }) => {
     const bottomRef = useRef<HTMLDivElement>(null);
@@ -20,6 +21,7 @@ const ChatHistory = ({ chatId }: { chatId: string }) => {
     const { data } = useListMessagesQuery({ chatId, limit: 30 }, { skip: !chatId });
     const { data: user } = useVerifyQuery();
     const [markRead] = useMarkReadMutation();
+    const { queue } = useSendMessage();
     
     useEffect(() => {
         if (!chatId) {
@@ -37,13 +39,33 @@ const ChatHistory = ({ chatId }: { chatId: string }) => {
                 const v = d.data() as any;
                 const readBy: Record<string, number> = v.readBy || {};
                 let isRead = false;
+                
+                console.log('🔍 Message debug:', {
+                    messageId: d.id,
+                    senderId: v.senderId,
+                    currentUserId: user?.uid,
+                    readBy,
+                    isOwnMessage: v.senderId === user?.uid,
+                    readByKeys: Object.keys(readBy)
+                });
+                
                 if (user?.uid) {
                     if (v.senderId === user.uid) {
                         // Own message: considered read if any other user has read it
                         isRead = Object.keys(readBy).some((uid) => uid !== user.uid);
+                        console.log('📤 Own message read status:', { 
+                            isRead, 
+                            readByKeys: Object.keys(readBy),
+                            otherReaders: Object.keys(readBy).filter(uid => uid !== user.uid)
+                        });
                     } else {
                         // Incoming message: read if current user is in readBy
                         isRead = !!readBy[user.uid];
+                        console.log('📥 Incoming message read status:', { 
+                            isRead, 
+                            readByKeys: Object.keys(readBy),
+                            currentUserInReadBy: !!readBy[user.uid]
+                        });
                     }
                 }
                 return {
@@ -56,7 +78,6 @@ const ChatHistory = ({ chatId }: { chatId: string }) => {
                     type: 'text',
                 } as Message;
             });
-            // If a new bot message arrived – stop typing indicator
             const hasNewBotMessage = snap.docChanges().some((ch) => {
                 const v = ch.doc.data() as any;
                 return ch.type === 'added' && v.isBot === true && v.chatId === chatId;
@@ -73,31 +94,19 @@ const ChatHistory = ({ chatId }: { chatId: string }) => {
         return () => unsub();
     }, [chatId, user?.uid]);
 
-    // Listen for client-side event to start typing indicator
-    useEffect(() => {
-        const onTyping = (e: Event) => {
-            const ev = e as CustomEvent<{ chatId: string }>;
-            if (!ev?.detail?.chatId || ev.detail.chatId !== chatId) return;
-            setIsBotTyping(true);
-            // Safety timeout (10s) in case reply fails
-            if (typingTimeoutRef.current) clearTimeout(typingTimeoutRef.current);
-            typingTimeoutRef.current = setTimeout(() => {
-                setIsBotTyping(false);
-                typingTimeoutRef.current = null;
-            }, 10000);
-        };
-        window.addEventListener('bot-typing', onTyping as EventListener);
-        return () => window.removeEventListener('bot-typing', onTyping as EventListener);
-    }, [chatId]);
-
     useEffect(() => {
         if (!chatId) return;
         const timer = setTimeout(() => {
             bottomRef.current?.scrollIntoView({ behavior: 'smooth' });
-            markRead({ chatId }).catch(() => {});
+            console.log('📖 Marking messages as read for chat:', chatId);
+            markRead({ chatId }).then(() => {
+                console.log('✅ Successfully marked messages as read');
+            }).catch((error) => {
+                console.error('❌ Failed to mark messages as read:', error);
+            });
         }, 300);
         return () => clearTimeout(timer);
-    }, [chatId, rtMessages]);
+    }, [chatId, rtMessages, markRead]);
       
     if (!rtMessages.length && !data?.messages) {
         return <ChatHistorySkeleton />;
@@ -113,9 +122,20 @@ const ChatHistory = ({ chatId }: { chatId: string }) => {
                     <div key={date}>
                         <DateDivider date={date} />
                         <div className="space-y-6">
-                            {messages.map((message) => (
-                                <MessageItem key={message.id} message={message} isOwn={message.senderId === user?.uid} />
-                            ))}
+                            {messages.map((message) => {
+                                // Get message status from queue for own messages
+                                const queuedMessage = queue.find(q => q.id === message.id);
+                                const messageStatus = queuedMessage?.status || 'sent';
+                                
+                                return (
+                                    <MessageItem 
+                                        key={message.id} 
+                                        message={message} 
+                                        isOwn={message.senderId === user?.uid}
+                                        messageStatus={messageStatus}
+                                    />
+                                );
+                            })}
                             {isBotTyping && (
                                 <div className="text-sm text-inverse/60">AI Bot is typing…</div>
                             )}

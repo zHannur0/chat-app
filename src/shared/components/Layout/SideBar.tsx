@@ -22,26 +22,28 @@ const sidebarVariants: Variants = {
 
 export default function SideBar({ isOpen }: SideBarProps) {
     const { isMobile } = useDevice();
+    
+    const shouldShow = !isMobile || !isOpen;
 
     return (
         <AnimatePresence mode="wait">
-            {!isOpen && isMobile && (
-                 <motion.div className="h-[calc(100vh-93px)] bg-background-muted w-full sm:max-w-[375px]"
-                 initial="hidden"
-                 animate="visible"
-                 exit="hidden"
-                 variants={isMobile ? sidebarVariants : {}}
+            {shouldShow && (
+                <motion.div 
+                    className="h-[calc(100vh-93px)] bg-background-muted w-full"
+                    initial={isMobile ? "hidden" : false}
+                    animate={isMobile ? "visible" : false}
+                    exit={isMobile ? "hidden" : undefined}
+                    variants={isMobile ? sidebarVariants : {}}
                 >
-                <UserSearch />
-                 <div className="bg-background-muted w-full p-6 border-b border-border">
-                     <p className="text-inverse text-xl font-semibold">
-                         Messages
-                     </p>
-                 </div>
-                 <ChatList />
-             </motion.div>                    
+                    <UserSearch />
+                    <div className="bg-background-muted w-full p-6 border-b border-border">
+                        <p className="text-inverse text-xl font-semibold">
+                            Messages
+                        </p>
+                    </div>
+                    <ChatList />
+                </motion.div>                    
             )}
         </AnimatePresence>
-       
     )
 }

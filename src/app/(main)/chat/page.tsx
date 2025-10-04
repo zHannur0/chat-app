@@ -15,15 +15,15 @@ export default function ChatPage() {
 
     return (
         <div className="flex relative w-full">
-             <div className={`w-full
+             <div className={`w-full sm:max-w-[375px]
                 ${isMobile && isChatOpen ? 'hidden' : 'flex'}
                 ${isTablet ? 'w-full sm:w-[320px]' : 'w-full'}
-                flex-shrink-0 transition-all duration-300
+                flex-shrink-0 transition-all duration-300 sm:border-r sm:border-border
             `}>
                 <SideBar isOpen={isChatOpen} />
             </div>
-            <div className={`w-full
-                ${isMobile ? '' : 'relative flex-1'}
+            <div className={`w-full 
+                ${isMobile ? '' : 'flex-1'}
                 ${isMobile && !isChatOpen ? 'pointer-events-none' : ''}
                 z-10
             `}>

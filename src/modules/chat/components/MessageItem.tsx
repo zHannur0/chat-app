@@ -1,14 +1,16 @@
-import { Message } from "../types/types";
+import { Message, MessageStatus } from "../types/types";
 import { Check, CheckCheck } from 'lucide-react';
 import { formatTimeShort } from "@/shared/lib/utils";
 import { motion } from "framer-motion";
+import MessageStatusComponent from "./MessageStatus";
 
 interface MessageItemProps {
     message: Message;
     isOwn: boolean;
+    messageStatus?: MessageStatus;
 }
 
-const MessageItem = ({ message, isOwn }: MessageItemProps) => { 
+const MessageItem = ({ message, isOwn, messageStatus = 'sent' }: MessageItemProps) => { 
     return (
         <motion.div
         initial={{ opacity: 0, transform: "translateY(10px) scale(0.95)" }}
@@ -31,14 +33,14 @@ const MessageItem = ({ message, isOwn }: MessageItemProps) => {
                     </span>
                     {isOwn && (
                         <span className="inline-flex">
-                            {message.isRead ? (
-                                <CheckCheck className="w-4 h-4" />
-                            ) : (
-                                <Check className="w-4 h-4" />
-                            )}
+                            <MessageStatusComponent 
+                                status={messageStatus} 
+                                isOwn={isOwn}
+                            />
                         </span>
                     )}
-
+                    {/* Debug info */}
+                
                 </div>
                 
              </div>

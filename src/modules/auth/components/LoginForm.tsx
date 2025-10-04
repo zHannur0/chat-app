@@ -1,61 +1,59 @@
 'use client'
 import { useRouter } from "next/navigation";
-import { useRef, useEffect, useState } from "react";
-import { completeRedirectAndGetIdToken, startGoogleRedirect } from "@/modules/auth/lib/firebaseClient";
-import { getAuth, onAuthStateChanged } from 'firebase/auth';
-import { useSignInEmailMutation, useSignUpEmailMutation } from "@/modules/auth/api/authApi";
+import { useState } from "react";
+import { useSignInEmailMutation } from "@/modules/auth/api/authApi";
+import { validatePassword } from "@/modules/auth/lib/validation";
+import ErrorMessage from "@/shared/components/ui/ErrorMessage";
 
 const LoginForm = () => {
     const router = useRouter();
-    const inProgressRef = useRef(false);
     const [email, setEmail] = useState("");
     const [password, setPassword] = useState("");
+    const [isLoading, setIsLoading] = useState(false);
+    const [errors, setErrors] = useState<{email?: string; password?: string; general?: string}>({});
     const [signInEmail] = useSignInEmailMutation();
-    const [signUpEmail] = useSignUpEmailMutation();
 
-    useEffect(() => {
-        let unsub: (() => void) | undefined;
-        (async () => {
-            const idToken = await completeRedirectAndGetIdToken();
-            console.log('idToken', idToken);
-            if (idToken) {
-                localStorage.setItem('idToken', idToken);
-                router.push('/chat');
-                return;
-            }
-            // Fallback: wait for auth state and then get token
-            try {
-                unsub = onAuthStateChanged(getAuth(), async (user) => {
-                    if (!user) return;
-                    try {
-                        const t = await user.getIdToken();
-                        localStorage.setItem('idToken', t);
-                        router.push('/chat');
-                    } catch {}
-                });
-            } catch {}
-        })();
-        return () => { try { unsub && unsub(); } catch {} };
-    }, [router]);
-
-    const handleGoogle = async () => {
-        if (inProgressRef.current) return;
-        inProgressRef.current = true;
-        try {
-            await startGoogleRedirect();
-        } catch {
-            inProgressRef.current = false;
+    const validateForm = () => {
+        const newErrors: {email?: string; password?: string; general?: string} = {};
+        
+        if (!email.trim()) {
+            newErrors.email = 'Email is required';
+        } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+            newErrors.email = 'Please enter a valid email address';
         }
+        
+        const passwordError = validatePassword(password);
+        if (passwordError) newErrors.password = passwordError;
+        
+        setErrors(newErrors);
+        return Object.keys(newErrors).length === 0;
     };
 
-    const handleEmailSignIn = async () => {
-        if (!email || !password) return;
+    const handleSignIn = async () => {
+        if (!validateForm()) return;
+        
+        setIsLoading(true);
+        setErrors({});
+        
         try {
             const res = await signInEmail({ email, password }).unwrap();
             localStorage.setItem('idToken', res.idToken);
             router.push('/chat');
-        } catch {
-            // silent
+        } catch (error: any) {
+            console.error('Login failed:', error);
+            
+            // Handle different error types
+            if (error?.data?.error?.includes('INVALID_EMAIL')) {
+                setErrors({ email: 'Invalid email format' });
+            } else if (error?.data?.error?.includes('INVALID_PASSWORD')) {
+                setErrors({ password: 'Incorrect password' });
+            } else if (error?.data?.error?.includes('EMAIL_NOT_FOUND')) {
+                setErrors({ email: 'Email not found' });
+            } else {
+                setErrors({ general: 'Login failed. Please try again.' });
+            }
+        } finally {
+            setIsLoading(false);
         }
     };
 
@@ -64,31 +62,61 @@ const LoginForm = () => {
     return (
         <div className="flex flex-col w-full max-w-[380px] p-6">
             <p className="text-sm mb-2">WELCOME BACK 👋🏻</p>
-            <h1 className="text-[30px] font-bold mb-8">Continue to your Account.</h1>
-            <button className="flex items-center gap-2 justify-center rounded-4xl bg-primary text-white h-14" onClick={handleGoogle} disabled={inProgressRef.current}>
+            <h1 className="text-[30px] font-bold mb-4">Continue to your Account.</h1>
+            {/* <button className="flex items-center gap-2 justify-center rounded-4xl bg-primary text-white h-14" onClick={handleGoogle} disabled={inProgressRef.current}>
                 <img src="/icons/google.svg" alt="google" />
                 <p>Continue with Google</p>
-            </button>
+            </button> */}
             <div className="mt-6 flex flex-col gap-3">
-                <input
-                    value={email}
-                    onChange={(e) => setEmail(e.target.value)}
-                    placeholder="Email"
-                    className="w-full rounded-md bg-transparent outline-none border border-border px-3 py-2 text-inverse"
-                    type="email"
-                    autoComplete="email"
-                />
-                <input
-                    value={password}
-                    onChange={(e) => setPassword(e.target.value)}
-                    placeholder="Password"
-                    className="w-full rounded-md bg-transparent outline-none border border-border px-3 py-2 text-inverse"
-                    type="password"
-                    autoComplete="current-password"
-                />
+                <div>
+                    <input
+                        value={email}
+                        onChange={(e) => setEmail(e.target.value)}
+                        placeholder="Email"
+                        className={`w-full rounded-md bg-transparent outline-none border px-3 py-2 text-inverse ${
+                            errors.email ? 'border-red-500' : 'border-border'
+                        }`}
+                        type="email"
+                        autoComplete="email"
+                        disabled={isLoading}
+                    />
+                    <ErrorMessage message={errors.email} />
+                </div>
+                
+                <div>
+                    <input
+                        value={password}
+                        onChange={(e) => setPassword(e.target.value)}
+                        placeholder="Password"
+                        className={`w-full rounded-md bg-transparent outline-none border px-3 py-2 text-inverse ${
+                            errors.password ? 'border-red-500' : 'border-border'
+                        }`}
+                        type="password"
+                        autoComplete="current-password"
+                        disabled={isLoading}
+                    />
+                    <ErrorMessage message={errors.password} />
+                </div>
+
+                {errors.general && (
+                    <ErrorMessage message={errors.general} className="text-center" />
+                )}
+
                 <div className="flex gap-2">
-                    <button className="flex-1 rounded-md bg-primary text-white h-10" onClick={handleEmailSignIn}>Sign In</button>
-                    <button className="flex-1 rounded-md bg-background text-inverse border border-border h-10" onClick={goRegister}>Create Account</button>
+                    <button 
+                        className="flex-1 rounded-md bg-primary text-white h-10 disabled:opacity-50" 
+                        onClick={handleSignIn}
+                        disabled={isLoading}
+                    >
+                        {isLoading ? 'Signing in...' : 'Sign In'}
+                    </button>
+                    <button 
+                        className="flex-1 rounded-md bg-background text-inverse border border-border h-10" 
+                        onClick={goRegister}
+                        disabled={isLoading}
+                    >
+                        Create Account
+                    </button>
                 </div>
             </div>
            
