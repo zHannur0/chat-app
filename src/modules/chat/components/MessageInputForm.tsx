@@ -13,7 +13,6 @@ const MessageInputForm = ({ chatId }: { chatId: string }) => {
     const [showEmojiPicker, setShowEmojiPicker] = useState(false);
     const { sendMessage, queue, isOnline, updateMessageStatus } = useSendMessage();
 
-    // Network status detection
     useState(() => {
         const handleOnline = () => setIsOffline(false);
         const handleOffline = () => setIsOffline(true);
@@ -36,7 +35,6 @@ const MessageInputForm = ({ chatId }: { chatId: string }) => {
         try {
             const result = await sendMessage(chatId, text);
             
-            // Trigger bot typing for bot chats
             const isBotChat = chatId.includes('bot') || chatId === process.env.BOT_CHAT_ID;
             if (isBotChat && result.status === 'sent') {
                 window.dispatchEvent(new CustomEvent('bot-typing', { detail: { chatId } }));
@@ -78,7 +76,6 @@ const MessageInputForm = ({ chatId }: { chatId: string }) => {
 
     return (
         <div className="flex flex-col bg-background w-full border-t border-border text-inverse">
-            {/* Offline/Retry indicator */}
             {isOffline && (
                 <div className="px-6 py-2 bg-yellow-100 text-yellow-800 text-sm text-center">
                     You're offline. Messages will be sent when connection is restored.
@@ -104,7 +101,6 @@ const MessageInputForm = ({ chatId }: { chatId: string }) => {
                         className="w-full rounded-2xl resize-none outline-none placeholder:text-inverse/50 bg-gray-100 px-4 py-2"
                     />
                     
-                    {/* Character counter */}
                     {message.length > 0 && (
                         <div className={`absolute bottom-1 right-2 text-xs ${getCharacterCountColor()}`}>
                             {message.length}/{MAX_LENGTH}
@@ -131,7 +127,7 @@ const MessageInputForm = ({ chatId }: { chatId: string }) => {
                     disabled={!message.trim() || isSending || message.length > MAX_LENGTH}
                 >
                     {isSending ? (
-                        <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                        <div className="w-5 h-5 border-2 border-border border-t-transparent rounded-full animate-spin" />
                     ) : (
                         <img 
                             src={message ? "/icons/sendActive.svg" : "/icons/send.svg"} 

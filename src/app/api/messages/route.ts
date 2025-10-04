@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 export const runtime = 'nodejs';
 import { verifyBearerToken } from '@/server/auth/verifyToken';
-import { createMessage, listMessages, markRead } from '@/server/firestore/dao';
+import { createMessage, listMessages, markRead, messagesCollection } from '@/server/firestore/dao';
 import { ChatDoc, MessageDoc } from '@/server/firestore/schema';
 const BOT_NAME = process.env.BOT_NAME || 'AI Bot';
 import { getChatById } from '@/server/firestore/dao';
@@ -15,10 +15,63 @@ export async function GET(req: NextRequest) {
     const { searchParams } = new URL(req.url);
     const chatId = searchParams.get('chatId');
     const beforeTs = searchParams.get('beforeTs');
+    const afterTs = searchParams.get('afterTs');
     const limit = Number(searchParams.get('limit') || 30);
+    
     if (!chatId) return NextResponse.json({ error: 'chatId required' }, { status: 400 });
-    const items = await listMessages(chatId, Math.max(1, Math.min(100, limit)), beforeTs ? Number(beforeTs) : undefined);
-    return NextResponse.json({ messages: items.reverse() });
+    
+    // Validate limit
+    const validLimit = Math.max(1, Math.min(100, limit));
+    
+    let items: MessageDoc[];
+    let hasMore = false;
+    let nextCursor: number | null = null;
+    let prevCursor: number | null = null;
+    
+    if (beforeTs) {
+      // Load older messages (scroll up)
+      items = await listMessages(chatId, validLimit, Number(beforeTs));
+      hasMore = items.length === validLimit;
+      if (items.length > 0) {
+        nextCursor = items[items.length - 1].createdAt;
+        prevCursor = items[0].createdAt;
+      }
+    } else if (afterTs) {
+      // Load newer messages (scroll down)
+      const newerItems = await messagesCollection()
+        .where('chatId', '==', chatId)
+        .where('createdAt', '>', Number(afterTs))
+        .orderBy('createdAt', 'asc')
+        .limit(validLimit)
+        .get();
+      items = newerItems.docs.map((d: any) => d.data() as MessageDoc);
+      hasMore = items.length === validLimit;
+      if (items.length > 0) {
+        nextCursor = items[items.length - 1].createdAt;
+        prevCursor = items[0].createdAt;
+      }
+    } else {
+      // Initial load - get latest messages
+      const latestItems = await messagesCollection()
+        .where('chatId', '==', chatId)
+        .orderBy('createdAt', 'desc')
+        .limit(validLimit)
+        .get();
+      items = latestItems.docs.map((d: any) => d.data() as MessageDoc).reverse();
+      hasMore = items.length === validLimit;
+      if (items.length > 0) {
+        nextCursor = items[0].createdAt;
+        prevCursor = items[items.length - 1].createdAt;
+      }
+    }
+    
+    return NextResponse.json({ 
+      messages: items,
+      hasMore,
+      nextCursor,
+      prevCursor,
+      total: items.length
+    });
   } catch (e) {
     return NextResponse.json({ error: 'Unauthorized', detail: String(e) }, { status: 401 });
   }

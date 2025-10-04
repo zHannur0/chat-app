@@ -11,7 +11,8 @@ const BOT_PHOTO = process.env.BOT_PHOTO || undefined;
 export async function GET(req: NextRequest) {
   try {
     const auth = await verifyBearerToken(req.headers.get('authorization') || undefined);
-    // memberships for current user
+    
+    // Get memberships for current user
     const mSnaps = await membershipsCollection().where('userId', '==', auth.uid).get();
     const memberships = mSnaps.docs.map(d => d.data() as MembershipDoc);
 
@@ -39,11 +40,74 @@ export async function GET(req: NextRequest) {
       };
       await createChat(botChat);
       await addMembership({ chatId, userId: auth.uid, role: 'owner', joinedAt: now });
-      // optional: add a pseudo-membership for bot for completeness (not required by UI)
       await addMembership({ chatId, userId: BOT_ID, role: 'member', joinedAt: now });
       memberships.push({ chatId, userId: auth.uid, role: 'owner', joinedAt: now } as MembershipDoc);
     }
 
+    if (memberships.length === 0) {
+      return NextResponse.json({ chats: [], totalUnread: 0 });
+    }
+
+    // Batch fetch all chats
+    const chatIds = memberships.map(m => m.chatId);
+    const chatSnaps = await Promise.all(chatIds.map(id => chatsCollection().doc(id).get()));
+    const chats = chatSnaps
+      .map(snap => snap.exists ? snap.data() as ChatDoc : null)
+      .filter(Boolean) as ChatDoc[];
+
+    // Batch fetch last messages for all chats
+    const lastMessagesPromises = chats.map(chat => 
+      messagesCollection()
+        .where('chatId', '==', chat.id)
+        .orderBy('createdAt', 'desc')
+        .limit(1)
+        .get()
+    );
+    const lastMessagesSnaps = await Promise.all(lastMessagesPromises);
+    const lastMessages = lastMessagesSnaps.map(snap => 
+      snap.docs[0]?.data() as MessageDoc | undefined
+    );
+
+    // Batch fetch unread counts
+    const unreadCountsPromises = chats.map((chat, index) => {
+      const membership = memberships.find(m => m.chatId === chat.id);
+      const lastReadAt = (membership as any)?.lastReadAt as number | undefined;
+      
+      if (lastReadAt) {
+        return messagesCollection()
+          .where('chatId', '==', chat.id)
+          .where('senderId', '!=', auth.uid)
+          .where('createdAt', '>', lastReadAt)
+          .get();
+      } else {
+        return messagesCollection()
+          .where('chatId', '==', chat.id)
+          .where('senderId', '!=', auth.uid)
+          .get();
+      }
+    });
+    const unreadCountsSnaps = await Promise.all(unreadCountsPromises);
+    const unreadCounts = unreadCountsSnaps.map(snap => snap.size);
+
+    // Get all unique user IDs for peer info
+    const allUserIds = new Set<string>();
+    chats.forEach(chat => {
+      if (chat.type === 'direct') {
+        chat.memberIds.forEach(id => {
+          if (id !== auth.uid) allUserIds.add(id);
+        });
+      }
+    });
+
+    // Batch fetch user info for all peers
+    const userSnaps = allUserIds.size > 0 
+      ? await Promise.all(Array.from(allUserIds).map(id => usersCollection().doc(id).get()))
+      : [];
+    const users = userSnaps
+      .map(snap => snap.exists ? { id: snap.id, ...snap.data() } : null)
+      .filter(Boolean) as Array<{ id: string; displayName?: string; photoURL?: string; email?: string }>;
+
+    // Build results
     const results: Array<ChatDoc & {
       lastMessage?: MessageDoc;
       unreadCount?: number;
@@ -51,35 +115,9 @@ export async function GET(req: NextRequest) {
     }> = [];
     let totalUnread = 0;
 
-    for (const m of memberships) {
-      const chat = await getChatById(m.chatId);
-      if (!chat) continue;
-
-      // last message
-      const lastMsgSnap = await messagesCollection()
-        .where('chatId', '==', chat.id)
-        .orderBy('createdAt', 'desc')
-        .limit(1)
-        .get();
-      const lastMessage = lastMsgSnap.docs[0]?.data() as MessageDoc | undefined;
-
-      // unread count based on lastReadAt
-      const lastReadAt = (m as any).lastReadAt as number | undefined;
-      let unreadCount = 0;
-      if (lastReadAt) {
-        const unreadSnap = await messagesCollection()
-          .where('chatId', '==', chat.id)
-          .where('senderId', '!=', auth.uid)
-          .where('createdAt', '>', lastReadAt)
-          .get();
-        unreadCount = unreadSnap.size;
-      } else {
-        const unreadSnap = await messagesCollection()
-          .where('chatId', '==', chat.id)
-          .where('senderId', '!=', auth.uid)
-          .get();
-        unreadCount = unreadSnap.size;
-      }
+    chats.forEach((chat, index) => {
+      const lastMessage = lastMessages[index];
+      const unreadCount = unreadCounts[index];
       totalUnread += unreadCount;
 
       // peer info for direct/bot
@@ -87,16 +125,20 @@ export async function GET(req: NextRequest) {
       if (chat.type === 'direct') {
         const peerId = chat.memberIds.find(id => id !== auth.uid);
         if (peerId) {
-          const uDoc = await usersCollection().doc(peerId).get();
-          const uData = uDoc.data() as any | undefined;
-          peer = { uid: peerId, displayName: uData?.displayName, photoURL: uData?.photoURL, email: uData?.email };
+          const user = users.find(u => u.id === peerId);
+          peer = { 
+            uid: peerId, 
+            displayName: user?.displayName, 
+            photoURL: user?.photoURL, 
+            email: user?.email 
+          };
         }
       } else if (chat.type === 'bot') {
         peer = { uid: chat.botId || BOT_ID, displayName: BOT_NAME, photoURL: BOT_PHOTO };
       }
 
       results.push({ ...chat, lastMessage, unreadCount, peer });
-    }
+    });
 
     // Sort: bot chats first, then by last activity desc
     results.sort((a, b) => {

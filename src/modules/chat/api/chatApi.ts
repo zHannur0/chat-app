@@ -34,6 +34,14 @@ export type MessageDto = {
   isBot?: boolean;
 };
 
+export type MessagesResponse = {
+  messages: MessageDto[];
+  hasMore: boolean;
+  nextCursor: number | null;
+  prevCursor: number | null;
+  total: number;
+};
+
 export const chatsApi = baseApi.injectEndpoints({
   endpoints: (build) => ({
     listChats: build.query<{ chats: ChatDto[] }, void>({
@@ -53,11 +61,24 @@ export const chatsApi = baseApi.injectEndpoints({
 
 export const messagesApi = baseApi.injectEndpoints({
   endpoints: (build) => ({
-    listMessages: build.query<{ messages: MessageDto[] }, { chatId: string; limit?: number; beforeTs?: number }>({
-      query: ({ chatId, limit = 30, beforeTs }) => ({ url: `/api/messages?chatId=${encodeURIComponent(chatId)}&limit=${limit}${beforeTs ? `&beforeTs=${beforeTs}` : ''}`, method: 'GET' }),
+    listMessages: build.query<MessagesResponse, { 
+      chatId: string; 
+      limit?: number; 
+      beforeTs?: number; 
+      afterTs?: number;
+    }>({
+      query: ({ chatId, limit = 30, beforeTs, afterTs }) => {
+        const params = new URLSearchParams({
+          chatId,
+          limit: limit.toString()
+        });
+        if (beforeTs) params.append('beforeTs', beforeTs.toString());
+        if (afterTs) params.append('afterTs', afterTs.toString());
+        return { url: `/api/messages?${params.toString()}`, method: 'GET' };
+      },
       providesTags: (r, e, a) => [{ type: 'Messages', id: a.chatId }],
     }),
-    sendMessage: build.mutation<{ message: MessageDto }, { chatId: string; text: string; isBotChat?: boolean; botId?: string }>({
+    sendMessage: build.mutation<{ message: MessageDto }, { chatId: string; text: string; clientId?: string }>({
       query: (body) => ({ url: '/api/messages', method: 'POST', body }),
       invalidatesTags: (r, e, a) => [{ type: 'Messages', id: a.chatId }, 'Chats'],
     }),
