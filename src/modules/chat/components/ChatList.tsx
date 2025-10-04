@@ -1,6 +1,6 @@
 "use client";
 
-import { formatTime } from "@/shared/lib/utils";
+import { formatTimeShort } from "@/shared/lib/utils";
 import { useListChatsQuery } from "@/modules/chat/api/chatApi";
 import { useEffect } from "react";
 import { getFirebaseApp } from "@/modules/auth/lib/firebaseClient";
@@ -84,9 +84,11 @@ const ChatList = (_props: ChatListProps) => {
             <p className="opacity-50 truncate flex-1">
               {chat.lastMessage?.text}
             </p>
-            <p className="opacity-50 whitespace-nowrap text-sm flex-shrink-0">
-              {formatTime(new Date(chat.updatedAt || chat.createdAt))}
-            </p>
+            {chat.lastMessage?.createdAt && (
+              <p className="opacity-50 whitespace-nowrap text-sm flex-shrink-0">
+                {formatTimeShort(new Date(chat.lastMessage?.createdAt))}
+              </p>
+            )}
           </div>
         </div>
       ))}

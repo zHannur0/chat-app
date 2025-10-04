@@ -1,51 +1,140 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Messenger App
 
-## Getting Started
+Современное веб-приложение для обмена сообщениями, построенное на Next.js 15 с Firebase и OpenAI.
 
-First, run the development server:
+## 🚀 Особенности
+
+- **Реальное время**: Мгновенная доставка сообщений
+- **AI-бот**: Интеграция с OpenAI для умного чата
+- **Аутентификация**: Firebase Auth
+- **Адаптивный дизайн**: Оптимизирован для мобильных устройств и десктопа
+- **Типизация**: Полная поддержка TypeScript
+- **Тестирование**: Unit и E2E тесты с Jest и Playwright
+
+## 🛠 Технологии
+
+- **Frontend**: Next.js 15, TypeScript
+- **Стилизация**: Tailwind CSS
+- **Состояние**: Redux Toolkit, RTK Query
+- **Аутентификация**: Firebase Auth
+- **База данных**: Firestore
+- **AI**: OpenAI
+- **Тестирование**: Jest, Playwright, Testing Library
+- **Линтинг**: ESLint, Prettier
+
+## 📦 Установка
+
+1. **Клонируйте репозиторий**
+
+   ```bash
+   git clone <repository-url>
+   cd messenger-app
+   ```
+
+2. **Установите зависимости**
+
+   ```bash
+   npm install
+   ```
+
+3. **Настройте переменные окружения**
+
+   Создайте файл `.env.local` в корне проекта:
+
+   ```env
+   # Firebase Configuration
+   NEXT_PUBLIC_FIREBASE_API_KEY=your_api_key_here
+   NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN=your_project_id.firebaseapp.com
+   NEXT_PUBLIC_FIREBASE_PROJECT_ID=your_project_id
+   NEXT_PUBLIC_FIREBASE_APP_ID=your_app_id
+
+   # Firebase Admin SDK (Server-side)
+   FIREBASE_ADMIN_PRIVATE_KEY="-----BEGIN PRIVATE KEY-----\nYOUR_PRIVATE_KEY_HERE\n-----END PRIVATE KEY-----\n"
+   FIREBASE_ADMIN_CLIENT_EMAIL=firebase-adminsdk-xxxxx@your_project_id.iam.gserviceaccount.com
+   FIREBASE_ADMIN_PROJECT_ID=your_project_id
+   FIREBASE_WEB_API_KEY=firebase_web_api_key
+
+   # Bot Configuration
+   BOT_NAME=AI Assistant
+   OPEN_AI=gemini-pro
+   ```
+
+## 🚀 Разработка
 
 ```bash
+# Запуск в режиме разработки
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+
+# Сборка для продакшена
+npm run build
+
+# Запуск продакшен сборки
+npm start
+
+# Линтинг
+npm run lint
+
+# Форматирование кода
+npm run format
+
+# Тесты
+npm run test
+npm run test:watch
+npm run test:coverage
+
+# E2E тесты
+npm run test:e2e
+npm run test:e2e:ui
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
-
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
-
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
-
-## Learn More
-
-To learn more about Next.js, take a look at the following resources:
-
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
-
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
-
-## Backend configuration (Firebase + Vertex AI)
-
-Create `.env.local` with the following variables:
-
-```
-FIREBASE_PROJECT_ID=
-FIREBASE_CLIENT_EMAIL=
-FIREBASE_PRIVATE_KEY="-----BEGIN PRIVATE KEY-----\n...\n-----END PRIVATE KEY-----\n"
-FIREBASE_WEB_API_KEY=
-VERTEX_LOCATION=us-central1
-VERTEX_MODEL=gemini-1.5-flash
 ```
 
-Install backend dependencies:
+## 📁 Структура проекта
 
 ```
-npm i firebase-admin firebase @google-cloud/vertexai @google-cloud/tasks google-auth-library
+
+src/
+├── app/ # Next.js App Router
+│ ├── (auth)/ # Аутентификация
+│ ├── (main)/ # Основное приложение
+│ └── api/ # API маршруты
+├── modules/ # Модули приложения
+│ ├── auth/ # Аутентификация
+│ ├── chat/ # Чат функциональность
+│ ├── profile/ # Профиль пользователя
+│ └── users/ # Управление пользователями
+├── server/ # Серверная логика
+│ ├── auth/ # Верификация токенов
+│ ├── bot/ # AI бот
+│ ├── firebase/ # Firebase Admin
+│ └── firestore/ # Firestore DAO
+└── shared/ # Общие компоненты
+├── components/ # UI компоненты
+├── hooks/ # Кастомные хуки
+├── lib/ # Утилиты
+└── store/ # Redux store
+
 ```
 
-API endpoints live under `src/app/api/**` and require Bearer `idToken` from Firebase Auth.
+## 🔧 Конфигурация
+
+### ESLint
+Настроен для TypeScript с правилами Next.js и Prettier.
+
+### Prettier
+Автоматическое форматирование кода.
+
+### Husky
+Pre-commit хуки для проверки кода.
+
+### Jest
+Конфигурация для тестирования React компонентов.
+
+### Playwright
+E2E тестирование с поддержкой различных браузеров.
+
+## 📄 Лицензия
+
+MIT License
+
+```

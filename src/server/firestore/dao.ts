@@ -105,11 +105,6 @@ export async function markRead(
     // Add the reader (userId) to readBy, not the sender
     readBy[userId] = timestamp;
 
-    console.log(`📖 Marking message ${doc.id} as read by ${userId}:`, {
-      senderId: data.senderId,
-      readBy,
-    });
-
     batch.update(doc.ref, { readBy });
   });
 

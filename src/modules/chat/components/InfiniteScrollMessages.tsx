@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState, useCallback } from "react";
+import { useEffect, useRef, useState, useCallback, useMemo } from "react";
 import { useInfiniteMessages } from "@/modules/chat/hooks/useInfiniteMessages";
 import { Message } from "@/modules/chat/types/types";
 import { groupMessagesByDate } from "@/shared/lib/utils";
@@ -47,7 +47,7 @@ const InfiniteScrollMessages = ({
       collection(db, "messages"),
       where("chatId", "==", chatId),
       orderBy("createdAt", "desc"),
-      where("createdAt", ">", Date.now() - 300000) // Last 5 minutes
+      where("createdAt", ">", Date.now() - 300000)
     );
 
     const unsub = onSnapshot(q, snap => {
@@ -58,10 +58,8 @@ const InfiniteScrollMessages = ({
 
         if (user?.uid) {
           if (v.senderId === user.uid) {
-            // Own message: considered read if any other user has read it
             isRead = Object.keys(readBy).some(uid => uid !== user.uid);
           } else {
-            // Incoming message: read if current user is in readBy
             isRead = !!readBy[user.uid];
           }
         }
@@ -83,28 +81,26 @@ const InfiniteScrollMessages = ({
     return () => unsub();
   }, [chatId, user?.uid]);
 
-  // Merge paginated messages with real-time messages
-  const allMessages = [
-    ...messages,
-    ...realtimeMessages.filter(
-      rtMsg => !messages.some(msg => msg.id === rtMsg.id)
-    ),
-  ].sort((a, b) => a.timestamp.getTime() - b.timestamp.getTime());
+  const allMessages = useMemo(() => {
+    const messageMap = new Map<string, Message>();
 
-  // Debug: Log message counts
-  console.log("📊 Messages:", {
-    paginated: messages.length,
-    realtime: realtimeMessages.length,
-    total: allMessages.length,
-    prevCount: prevMessageCountRef.current,
-  });
+    messages.forEach(msg => {
+      messageMap.set(msg.id, msg);
+    });
 
-  // Stable callback for onScrollToBottom
+    realtimeMessages.forEach(msg => {
+      messageMap.set(msg.id, msg);
+    });
+
+    return Array.from(messageMap.values()).sort(
+      (a, b) => a.timestamp.getTime() - b.timestamp.getTime()
+    );
+  }, [messages, realtimeMessages]);
+
   const handleScrollToBottom = useCallback(() => {
     onScrollToBottom?.();
   }, [onScrollToBottom]);
 
-  // Intersection Observer for infinite scroll
   useEffect(() => {
     const topSentinel = topSentinelRef.current;
     if (!topSentinel) return;
@@ -123,12 +119,10 @@ const InfiniteScrollMessages = ({
     return () => observer.disconnect();
   }, [hasMore, isLoadingMore, loadMore]);
 
-  // Auto-scroll to bottom on new messages
   useEffect(() => {
     if (bottomRef.current && allMessages.length > 0) {
       bottomRef.current.scrollIntoView({ behavior: "smooth" });
 
-      // Only call onScrollToBottom if the message count actually increased
       if (allMessages.length > prevMessageCountRef.current) {
         console.log("📱 New message detected, calling onScrollToBottom");
         handleScrollToBottom();
@@ -178,17 +172,17 @@ const InfiniteScrollMessages = ({
           </div>
         )}
 
-        {Object.entries(groupedMessages).map(([date, messages]) => (
+        {Object.entries(groupedMessages).map(([date, dateMessages]) => (
           <div key={date}>
             <DateDivider date={date} />
             <div className="space-y-6">
-              {messages.map(message => {
+              {dateMessages.map((message, index) => {
                 const queuedMessage = queue.find(q => q.id === message.id);
                 const messageStatus = queuedMessage?.status || "sent";
 
                 return (
                   <MessageItem
-                    key={message.id}
+                    key={`${message.id}-${index}`}
                     message={message}
                     isOwn={message.senderId === user?.uid}
                     messageStatus={messageStatus}

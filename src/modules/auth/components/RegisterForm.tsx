@@ -4,7 +4,6 @@ import { useState } from "react";
 import { useSignUpEmailMutation } from "@/modules/auth/api/authApi";
 import {
   validatePassword,
-  validateDisplayName,
   validateConfirmPassword,
 } from "@/modules/auth/lib/validation";
 import ErrorMessage from "@/shared/components/ui/ErrorMessage";
@@ -12,13 +11,11 @@ import ErrorMessage from "@/shared/components/ui/ErrorMessage";
 const RegisterForm = () => {
   const router = useRouter();
   const [email, setEmail] = useState("");
-  const [displayName, setDisplayName] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [errors, setErrors] = useState<{
     email?: string;
-    displayName?: string;
     password?: string;
     confirmPassword?: string;
     general?: string;
@@ -28,7 +25,6 @@ const RegisterForm = () => {
   const validateForm = () => {
     const newErrors: {
       email?: string;
-      displayName?: string;
       password?: string;
       confirmPassword?: string;
       general?: string;
@@ -39,9 +35,6 @@ const RegisterForm = () => {
     } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
       newErrors.email = "Please enter a valid email address";
     }
-
-    const displayNameError = validateDisplayName(displayName);
-    if (displayNameError) newErrors.displayName = displayNameError;
 
     const passwordError = validatePassword(password);
     if (passwordError) newErrors.password = passwordError;
@@ -106,7 +99,7 @@ const RegisterForm = () => {
           <ErrorMessage message={errors.email} />
         </div>
 
-        <div>
+        {/* <div>
           <input
             value={displayName}
             onChange={e => setDisplayName(e.target.value)}
@@ -119,7 +112,7 @@ const RegisterForm = () => {
             disabled={isLoading}
           />
           <ErrorMessage message={errors.displayName} />
-        </div>
+        </div> */}
 
         <div>
           <input

@@ -18,16 +18,12 @@ import InfiniteScrollMessages from "./InfiniteScrollMessages";
 const ChatHistory = ({ chatId }: { chatId: string }) => {
   const [isBotTyping, setIsBotTyping] = useState(false);
   const typingTimeoutRef = useRef<NodeJS.Timeout | null>(null);
-  // const { data: user } = useVerifyQuery();
   const [markRead] = useMarkReadMutation();
-  // const { queue } = useSendMessage();
 
   const handleScrollToBottom = useCallback(() => {
-    // Mark as read when user scrolls to bottom
     markRead({ chatId }).catch(console.error);
   }, [markRead, chatId]);
 
-  // Listen for new bot messages to stop typing indicator
   useEffect(() => {
     if (!chatId) return;
 
@@ -36,11 +32,10 @@ const ChatHistory = ({ chatId }: { chatId: string }) => {
       collection(db, "messages"),
       where("chatId", "==", chatId),
       orderBy("createdAt", "desc"),
-      where("createdAt", ">", Date.now() - 60000) // Only listen to messages from last minute
+      where("createdAt", ">", Date.now() - 60000)
     );
 
     const unsub = onSnapshot(q, snap => {
-      // Check for new bot messages to stop typing indicator
       const hasNewBotMessage = snap.docChanges().some(ch => {
         const v = ch.doc.data() as any;
         return ch.type === "added" && v.isBot === true && v.chatId === chatId;
@@ -58,7 +53,6 @@ const ChatHistory = ({ chatId }: { chatId: string }) => {
     return () => unsub();
   }, [chatId]);
 
-  // Listen for client-side event to start typing indicator
   useEffect(() => {
     const onTyping = (e: Event) => {
       const ev = e as CustomEvent<{ chatId: string }>;
@@ -75,7 +69,6 @@ const ChatHistory = ({ chatId }: { chatId: string }) => {
       window.removeEventListener("bot-typing", onTyping as EventListener);
   }, [chatId]);
 
-  // Mark messages as read when chat changes
   useEffect(() => {
     if (!chatId) return;
     const timer = setTimeout(() => {
