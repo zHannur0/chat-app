@@ -1,9 +1,8 @@
-import * as admin from 'firebase-admin';
+import * as admin from "firebase-admin";
 
 declare global {
-  // eslint-disable-next-line no-var
   var __FIREBASE_ADMIN_APP__: admin.app.App | undefined;
-  // eslint-disable-next-line no-var
+
   var __FIRESTORE_CONFIGURED__: boolean | undefined;
 }
 
@@ -28,10 +27,15 @@ export function getFirebaseAdminApp(): admin.app.App {
       // Fallback to explicit service account envs
       const projectId = process.env.FIREBASE_PROJECT_ID;
       const clientEmail = process.env.FIREBASE_CLIENT_EMAIL;
-      const privateKey = (process.env.FIREBASE_PRIVATE_KEY || '').replace(/\\n/g, '\n');
+      const privateKey = (process.env.FIREBASE_PRIVATE_KEY || "").replace(
+        /\\n/g,
+        "\n"
+      );
 
       if (!projectId || !clientEmail || !privateKey) {
-        throw new Error('Missing Firebase Admin credentials envs: require FIREBASE_PROJECT_ID, FIREBASE_CLIENT_EMAIL, FIREBASE_PRIVATE_KEY or set GOOGLE_APPLICATION_CREDENTIALS');
+        throw new Error(
+          "Missing Firebase Admin credentials envs: require FIREBASE_PROJECT_ID, FIREBASE_CLIENT_EMAIL, FIREBASE_PRIVATE_KEY or set GOOGLE_APPLICATION_CREDENTIALS"
+        );
       }
 
       app = admin.initializeApp({
@@ -65,5 +69,3 @@ export function getFirestore() {
 }
 
 export type AdminUser = admin.auth.DecodedIdToken;
-
-

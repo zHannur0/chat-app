@@ -1,29 +1,31 @@
-import { NextRequest, NextResponse } from 'next/server';
-import { verifyBearerToken } from '@/server/auth/verifyToken';
-import { getFirestore } from '@/server/firebase/admin';
+import { NextRequest, NextResponse } from "next/server";
+import { verifyBearerToken } from "@/server/auth/verifyToken";
+import { getFirestore } from "@/server/firebase/admin";
 
-export const runtime = 'nodejs';
+export const runtime = "nodejs";
 
 export async function GET(req: NextRequest) {
   try {
-    await verifyBearerToken(req.headers.get('authorization') || undefined);
+    await verifyBearerToken(req.headers.get("authorization") || undefined);
     const { searchParams } = new URL(req.url);
-    const q = (searchParams.get('q') || '').toLowerCase();
+    const q = (searchParams.get("q") || "").toLowerCase();
     if (!q || q.length < 1) return NextResponse.json({ users: [] });
 
     // prefix search by email or display name (lowercased)
     const db = getFirestore();
     const [byEmail, byName] = await Promise.all([
-      db.collection('users')
-        .orderBy('emailLower')
+      db
+        .collection("users")
+        .orderBy("emailLower")
         .startAt(q)
-        .endAt(q + '\\uf8ff')
+        .endAt(`${q}\\uf8ff`)
         .limit(20)
         .get(),
-      db.collection('users')
-        .orderBy('displayNameLower')
+      db
+        .collection("users")
+        .orderBy("displayNameLower")
         .startAt(q)
-        .endAt(q + '\\uf8ff')
+        .endAt(`${q}\\uf8ff`)
         .limit(20)
         .get(),
     ]);
@@ -33,9 +35,7 @@ export async function GET(req: NextRequest) {
     byName.docs.forEach(d => merged.set(d.id, mapDoc(d)));
     const users = Array.from(merged.values()).slice(0, 20);
     return NextResponse.json({ users });
-  } catch (e) {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  } catch {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 }
-
-

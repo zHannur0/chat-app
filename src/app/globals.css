@@ -6,14 +6,14 @@
 }
 
 @theme inline {
-  --color-background: #FFFFFF;
-  --color-background-muted: #FBFBFB;
-  --color-primary: #9C7AF2;
-  --color-secondary: #5BC0EB;
+  --color-background: #ffffff;
+  --color-background-muted: #fbfbfb;
+  --color-primary: #9c7af2;
+  --color-secondary: #5bc0eb;
   --color-foreground: #000000;
-  --color-muted: #F2F1F4;
-  --color-inverse: #180A29;
-  --color-border: #9AACB5;
+  --color-muted: #f2f1f4;
+  --color-inverse: #180a29;
+  --color-border: #9aacb5;
 }
 
 @media (prefers-color-scheme: dark) {

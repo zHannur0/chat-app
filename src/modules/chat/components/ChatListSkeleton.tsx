@@ -1,4 +1,4 @@
-'use client'
+"use client";
 
 export default function ChatListSkeleton() {
   return (
@@ -18,5 +18,3 @@ export default function ChatListSkeleton() {
     </div>
   );
 }
-
-

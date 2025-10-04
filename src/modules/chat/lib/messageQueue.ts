@@ -1,6 +1,11 @@
-'use client'
+"use client";
 
-export type MessageStatus = 'sending' | 'sent' | 'delivered' | 'read' | 'failed';
+export type MessageStatus =
+  | "sending"
+  | "sent"
+  | "delivered"
+  | "read"
+  | "failed";
 
 export interface QueuedMessage {
   id: string;
@@ -13,7 +18,7 @@ export interface QueuedMessage {
 }
 
 class MessageQueue {
-  private storageKey = 'messageQueue';
+  private storageKey = "messageQueue";
 
   // Get all queued messages from localStorage
   getMessages(): QueuedMessage[] {
@@ -21,7 +26,7 @@ class MessageQueue {
       const stored = localStorage.getItem(this.storageKey);
       return stored ? JSON.parse(stored) : [];
     } catch (error) {
-      console.error('Failed to get messages from localStorage:', error);
+      console.error("Failed to get messages from localStorage:", error);
       return [];
     }
   }
@@ -33,7 +38,7 @@ class MessageQueue {
       messages.push(message);
       localStorage.setItem(this.storageKey, JSON.stringify(messages));
     } catch (error) {
-      console.error('Failed to add message to queue:', error);
+      console.error("Failed to add message to queue:", error);
     }
   }
 
@@ -42,13 +47,13 @@ class MessageQueue {
     try {
       const messages = this.getMessages();
       const index = messages.findIndex(msg => msg.id === id);
-      
+
       if (index !== -1) {
         messages[index] = { ...messages[index], ...updates };
         localStorage.setItem(this.storageKey, JSON.stringify(messages));
       }
     } catch (error) {
-      console.error('Failed to update message:', error);
+      console.error("Failed to update message:", error);
     }
   }
 
@@ -59,7 +64,7 @@ class MessageQueue {
       const filtered = messages.filter(msg => msg.id !== id);
       localStorage.setItem(this.storageKey, JSON.stringify(filtered));
     } catch (error) {
-      console.error('Failed to remove message:', error);
+      console.error("Failed to remove message:", error);
     }
   }
 
@@ -70,7 +75,7 @@ class MessageQueue {
 
   // Get failed messages
   getFailedMessages(): QueuedMessage[] {
-    return this.getMessages().filter(msg => msg.status === 'failed');
+    return this.getMessages().filter(msg => msg.status === "failed");
   }
 
   // Clear all messages
@@ -78,7 +83,7 @@ class MessageQueue {
     try {
       localStorage.removeItem(this.storageKey);
     } catch (error) {
-      console.error('Failed to clear messages:', error);
+      console.error("Failed to clear messages:", error);
     }
   }
 
@@ -86,11 +91,11 @@ class MessageQueue {
   clearOldMessages(): void {
     try {
       const messages = this.getMessages();
-      const oneDayAgo = Date.now() - (24 * 60 * 60 * 1000);
+      const oneDayAgo = Date.now() - 24 * 60 * 60 * 1000;
       const filtered = messages.filter(msg => msg.createdAt > oneDayAgo);
       localStorage.setItem(this.storageKey, JSON.stringify(filtered));
     } catch (error) {
-      console.error('Failed to clear old messages:', error);
+      console.error("Failed to clear old messages:", error);
     }
   }
 }

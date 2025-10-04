@@ -44,5 +44,3 @@ export type MessageDoc = {
   isBot?: boolean;
   meta?: Record<string, unknown>;
 };
-
-

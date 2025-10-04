@@ -1,4 +1,4 @@
-import { ChatDto, MessageDto } from '@/modules/chat/api/chatApi';
+import { MessageDto } from "@/modules/chat/api/chatApi";
 
 export function mapDtoMessageToUi(dto: MessageDto) {
   return {
@@ -8,9 +8,6 @@ export function mapDtoMessageToUi(dto: MessageDto) {
     content: dto.text,
     timestamp: new Date(dto.createdAt),
     isRead: true,
-    type: 'text' as const,
+    type: "text" as const,
   };
 }
-
-
-

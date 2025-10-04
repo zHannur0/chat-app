@@ -1,41 +1,43 @@
-'use client'
+"use client";
 
 import SideBar from "@/shared/components/Layout/SideBar";
 import ChatWindow from "@/modules/chat/components/ChatWindow";
 import { useDevice } from "@/shared/hooks/useDevice";
-import { useSearchParams, useRouter } from 'next/navigation';
+import { useSearchParams, useRouter } from "next/navigation";
 
 export default function ChatPage() {
-    const { isMobile, isTablet } = useDevice();
-    const searchParams = useSearchParams();
-    const router = useRouter();
-    const chatId = searchParams.get('chat') || undefined;
+  const { isMobile, isTablet } = useDevice();
+  const searchParams = useSearchParams();
+  const router = useRouter();
+  const chatId = searchParams.get("chat") || undefined;
 
-    const isChatOpen = Boolean(chatId);
+  const isChatOpen = Boolean(chatId);
 
-    return (
-        <div className="flex relative w-full">
-             <div className={`w-full sm:max-w-[375px]
-                ${isMobile && isChatOpen ? 'hidden' : 'flex'}
-                ${isTablet ? 'w-full sm:w-[320px]' : 'w-full'}
+  return (
+    <div className="flex relative w-full">
+      <div
+        className={`w-full sm:max-w-[375px]
+                ${isMobile && isChatOpen ? "hidden" : "flex"}
+                ${isTablet ? "w-full sm:w-[320px]" : "w-full"}
                 flex-shrink-0 transition-all duration-300 sm:border-r sm:border-border
-            `}>
-                <SideBar isOpen={isChatOpen} />
-            </div>
-            <div className={`w-full 
-                ${isMobile ? '' : 'flex-1'}
-                ${isMobile && !isChatOpen ? 'pointer-events-none' : ''}
+            `}
+      >
+        <SideBar isOpen={isChatOpen} />
+      </div>
+      <div
+        className={`w-full 
+                ${isMobile ? "" : "flex-1"}
+                ${isMobile && !isChatOpen ? "pointer-events-none" : ""}
                 z-10
-            `}>
-                <ChatWindow 
-                    chatId={chatId}
-                    isOpen={isChatOpen}
-                    onClose={() => router.push('/chat')}
-                    isMobile={isMobile}
-                 />
-            </div>
-        
-        </div>
-        
-    )
+            `}
+      >
+        <ChatWindow
+          chatId={chatId}
+          isOpen={isChatOpen}
+          onClose={() => router.push("/chat")}
+          isMobile={isMobile}
+        />
+      </div>
+    </div>
+  );
 }

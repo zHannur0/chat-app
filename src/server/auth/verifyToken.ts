@@ -5,7 +5,9 @@ export interface AuthContext {
   email?: string;
 }
 
-export async function verifyBearerToken(authorizationHeader?: string): Promise<AuthContext> {
+export async function verifyBearerToken(
+  authorizationHeader?: string
+): Promise<AuthContext> {
   if (!authorizationHeader || !authorizationHeader.startsWith("Bearer ")) {
     throw new Error("Missing or invalid Authorization header");
   }
@@ -13,5 +15,3 @@ export async function verifyBearerToken(authorizationHeader?: string): Promise<A
   const decoded = await getAuth().verifyIdToken(token);
   return { uid: decoded.uid, email: decoded.email };
 }
-
-
