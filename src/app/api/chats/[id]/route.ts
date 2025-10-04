@@ -7,8 +7,9 @@ export const runtime = "nodejs";
 
 export async function GET(
   _req: NextRequest,
-  { params }: { params: { id: string } }
+  context: { params: Promise<{ id: string }> }
 ) {
+  const params = await context.params;
   try {
     const auth = await verifyBearerToken(
       _req.headers.get("authorization") || undefined

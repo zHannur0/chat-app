@@ -4,8 +4,9 @@ import SideBar from "@/shared/components/Layout/SideBar";
 import ChatWindow from "@/modules/chat/components/ChatWindow";
 import { useDevice } from "@/shared/hooks/useDevice";
 import { useSearchParams, useRouter } from "next/navigation";
+import { Suspense } from "react";
 
-export default function ChatPage() {
+function ChatPageContent() {
   const { isMobile, isTablet } = useDevice();
   const searchParams = useSearchParams();
   const router = useRouter();
@@ -39,5 +40,13 @@ export default function ChatPage() {
         />
       </div>
     </div>
+  );
+}
+
+export default function ChatPage() {
+  return (
+    <Suspense fallback={<div>Loading...</div>}>
+      <ChatPageContent />
+    </Suspense>
   );
 }

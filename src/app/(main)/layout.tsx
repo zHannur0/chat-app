@@ -5,7 +5,7 @@ import { useVerifyQuery } from "@/modules/auth/api/authApi";
 import { useEffect, useMemo } from "react";
 import { useRouter } from "next/navigation";
 import { motion } from "framer-motion";
-import { usePathname, useSearchParams } from "next/navigation";
+import { usePathname } from "next/navigation";
 
 export default function MainLayout({
   children,
@@ -28,8 +28,7 @@ export default function MainLayout({
     refetchOnMountOrArgChange: true,
   });
   const pathname = usePathname();
-  const search = useSearchParams();
-  const viewKey = `${pathname}?${search.toString()}`;
+  const viewKey = pathname;
 
   useEffect(() => {
     if (!token) {
@@ -46,8 +45,6 @@ export default function MainLayout({
   return (
     <div>
       <Header />
-      {/* <AnimatePresence mode="wait">
-                {!isLoading && user ? ( */}
       <motion.div
         key={viewKey}
         initial={{ opacity: 0, y: 6 }}
@@ -57,8 +54,6 @@ export default function MainLayout({
       >
         {children}
       </motion.div>
-      {/* ) : null} */}
-      {/* </AnimatePresence> */}
     </div>
   );
 }
