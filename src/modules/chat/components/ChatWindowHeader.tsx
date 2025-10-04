@@ -12,7 +12,7 @@ const ChatWindowHeader = ({
   chat,
 }: ChatWindowHeaderProps) => {
   return (
-    <div className="flex items-start bg-background w-full px-6 py-2 border-b border-border text-inverse gap-2">
+    <div className="flex items-start bg-background w-full px-6 py-2 border-b border-border text-inverse gap-2 h-[69px]">
       {isMobile && (
         <img
           src="/icons/back.svg"

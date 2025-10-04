@@ -10,6 +10,7 @@ import {
   onSnapshot,
   query,
   where,
+  orderBy,
 } from "firebase/firestore";
 import { useVerifyQuery } from "@/modules/auth/api/authApi";
 import { useRouter } from "next/navigation";
@@ -28,12 +29,31 @@ const ChatList = (_props: ChatListProps) => {
   useEffect(() => {
     if (!user?.uid) return;
     const db = getFirestore(getFirebaseApp());
+
     const membershipsRef = collection(db, "memberships");
-    const q = query(membershipsRef, where("userId", "==", user.uid));
-    const unsub = onSnapshot(q, () => {
+    const membershipsQuery = query(
+      membershipsRef,
+      where("userId", "==", user.uid)
+    );
+    const unsubMemberships = onSnapshot(membershipsQuery, () => {
+      console.log("🔄 ChatList: Membership changed, refetching chats");
       refetch();
     });
-    return () => unsub();
+
+    const messagesRef = collection(db, "messages");
+    const messagesQuery = query(
+      messagesRef,
+      where("createdAt", ">", Date.now() - 300000), // Last 5 minutes
+      orderBy("createdAt", "desc")
+    );
+    const unsubMessages = onSnapshot(messagesQuery, () => {
+      refetch();
+    });
+
+    return () => {
+      unsubMemberships();
+      unsubMessages();
+    };
   }, [user?.uid, refetch]);
 
   if (isLoading) return <ChatListSkeleton />;

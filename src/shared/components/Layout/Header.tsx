@@ -6,7 +6,9 @@ import { useVerifyQuery } from "@/modules/auth/api/authApi";
 
 export const Header = () => {
   const router = useRouter();
-  const { data: user } = useVerifyQuery();
+  const { data: user } = useVerifyQuery(undefined, {
+    refetchOnMountOrArgChange: true,
+  });
 
   const handleLogout = () => {
     localStorage.removeItem("idToken");

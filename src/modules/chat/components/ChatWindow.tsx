@@ -82,7 +82,7 @@ const ChatWindow = ({ chatId, isOpen, onClose, isMobile }: ChatWindowProps) => {
     <AnimatePresence mode="wait">
       {(isOpen || !isMobile) && chatId && chatData && (
         <motion.div
-          className={`flex flex-col w-full h-[calc(100vh-93px)]`}
+          className={`flex flex-col w-full h-[calc(100vh-93px)] overflow-hidden`}
           key={chatId}
           initial="hidden"
           animate="visible"

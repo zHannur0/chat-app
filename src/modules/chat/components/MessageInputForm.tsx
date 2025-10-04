@@ -62,13 +62,6 @@ const MessageInputForm = ({ chatId }: { chatId: string }) => {
     }
   };
 
-  const getCharacterCountColor = () => {
-    const ratio = message.length / MAX_LENGTH;
-    if (ratio > 0.9) return "text-red-500";
-    if (ratio > 0.8) return "text-yellow-500";
-    return "text-gray-500";
-  };
-
   const failedMessages = queue.filter(msg => msg.status === "failed");
   const isSending = queue.some(msg => msg.status === "sending");
 
@@ -103,14 +96,6 @@ const MessageInputForm = ({ chatId }: { chatId: string }) => {
             disabled={isSending}
             className="w-full rounded-2xl resize-none outline-none placeholder:text-inverse/50 bg-gray-100 px-4 py-2"
           />
-
-          {message.length > 0 && (
-            <div
-              className={`absolute bottom-1 right-2 text-xs ${getCharacterCountColor()}`}
-            >
-              {message.length}/{MAX_LENGTH}
-            </div>
-          )}
 
           <button
             type="button"

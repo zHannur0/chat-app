@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, useCallback } from "react";
 import { useInfiniteMessages } from "@/modules/chat/hooks/useInfiniteMessages";
 import { Message } from "@/modules/chat/types/types";
 import { groupMessagesByDate } from "@/shared/lib/utils";
@@ -31,6 +31,7 @@ const InfiniteScrollMessages = ({
   const containerRef = useRef<HTMLDivElement>(null);
   const topSentinelRef = useRef<HTMLDivElement>(null);
   const bottomRef = useRef<HTMLDivElement>(null);
+  const prevMessageCountRef = useRef(0);
   const { data: user } = useVerifyQuery();
   const { queue } = useSendMessage();
   const [realtimeMessages, setRealtimeMessages] = useState<Message[]>([]);
@@ -90,6 +91,19 @@ const InfiniteScrollMessages = ({
     ),
   ].sort((a, b) => a.timestamp.getTime() - b.timestamp.getTime());
 
+  // Debug: Log message counts
+  console.log("📊 Messages:", {
+    paginated: messages.length,
+    realtime: realtimeMessages.length,
+    total: allMessages.length,
+    prevCount: prevMessageCountRef.current,
+  });
+
+  // Stable callback for onScrollToBottom
+  const handleScrollToBottom = useCallback(() => {
+    onScrollToBottom?.();
+  }, [onScrollToBottom]);
+
   // Intersection Observer for infinite scroll
   useEffect(() => {
     const topSentinel = topSentinelRef.current;
@@ -113,9 +127,15 @@ const InfiniteScrollMessages = ({
   useEffect(() => {
     if (bottomRef.current && allMessages.length > 0) {
       bottomRef.current.scrollIntoView({ behavior: "smooth" });
-      onScrollToBottom?.();
+
+      // Only call onScrollToBottom if the message count actually increased
+      if (allMessages.length > prevMessageCountRef.current) {
+        console.log("📱 New message detected, calling onScrollToBottom");
+        handleScrollToBottom();
+      }
+      prevMessageCountRef.current = allMessages.length;
     }
-  }, [allMessages.length, onScrollToBottom]);
+  }, [allMessages.length, handleScrollToBottom]);
 
   if (isLoading) {
     return <ChatHistorySkeleton />;
@@ -145,7 +165,6 @@ const InfiniteScrollMessages = ({
       ref={containerRef}
     >
       <div className="mx-auto p-6 w-full">
-        {/* Top sentinel for infinite scroll */}
         {hasMore && (
           <div
             ref={topSentinelRef}
@@ -164,7 +183,6 @@ const InfiniteScrollMessages = ({
             <DateDivider date={date} />
             <div className="space-y-6">
               {messages.map(message => {
-                // Get message status from queue for own messages
                 const queuedMessage = queue.find(q => q.id === message.id);
                 const messageStatus = queuedMessage?.status || "sent";
 

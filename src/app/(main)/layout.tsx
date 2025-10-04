@@ -2,7 +2,7 @@
 
 import { Header } from "@/shared/components/Layout/Header";
 import { useVerifyQuery } from "@/modules/auth/api/authApi";
-import { useEffect, useState } from "react";
+import { useEffect, useMemo } from "react";
 import { useRouter } from "next/navigation";
 import { motion } from "framer-motion";
 import { usePathname, useSearchParams } from "next/navigation";
@@ -13,33 +13,41 @@ export default function MainLayout({
   children: React.ReactNode;
 }) {
   const router = useRouter();
-  const pathname = usePathname();
-  const search = useSearchParams();
-  const viewKey = `${pathname}?${search.toString()}`;
-
-  const [token, setToken] = useState<string | null>(null);
-
-  useEffect(() => {
-    if (typeof window !== "undefined") {
-      setToken(localStorage.getItem("idToken"));
-    }
-  }, []);
+  const token = useMemo(
+    () =>
+      typeof window !== "undefined" ? localStorage.getItem("idToken") : null,
+    []
+  );
 
   const {
     data: user,
     isLoading,
     isError,
-  } = useVerifyQuery(undefined, { skip: !token });
+  } = useVerifyQuery(undefined, {
+    skip: !token,
+    refetchOnMountOrArgChange: true,
+  });
+  const pathname = usePathname();
+  const search = useSearchParams();
+  const viewKey = `${pathname}?${search.toString()}`;
 
   useEffect(() => {
-    if (!token || (!isLoading && (isError || !user))) {
+    if (!token) {
       router.replace("/login");
     }
-  }, [token, isLoading, isError, user, router]);
+  }, [token]);
+
+  useEffect(() => {
+    if (!isLoading && (isError || !user)) {
+      router.replace("/login");
+    }
+  }, [isLoading, isError, user, router]);
 
   return (
     <div>
       <Header />
+      {/* <AnimatePresence mode="wait">
+                {!isLoading && user ? ( */}
       <motion.div
         key={viewKey}
         initial={{ opacity: 0, y: 6 }}
@@ -49,6 +57,8 @@ export default function MainLayout({
       >
         {children}
       </motion.div>
+      {/* ) : null} */}
+      {/* </AnimatePresence> */}
     </div>
   );
 }
