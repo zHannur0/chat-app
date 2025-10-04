@@ -20,7 +20,24 @@ export default [
       "*.config.mjs",
       "*.config.ts",
       "public/**",
+      "playwright-report/**",
+      "test-results/**",
+      "coverage/**",
     ],
+  },
+
+  // Jest setup file configuration
+  {
+    files: ["jest.setup.js"],
+    languageOptions: {
+      globals: {
+        jest: "readonly",
+        URLSearchParams: "readonly",
+      },
+    },
+    rules: {
+      "no-undef": "off",
+    },
   },
 
   // TypeScript files configuration
@@ -31,9 +48,6 @@ export default [
       parserOptions: {
         ecmaVersion: "latest",
         sourceType: "module",
-        ecmaFeatures: {
-          jsx: true,
-        },
         project: "./tsconfig.json",
       },
       globals: {
@@ -59,6 +73,24 @@ export default [
         JSX: "readonly",
         // TypeScript globals
         NodeJS: "readonly",
+        // Jest globals
+        jest: "readonly",
+        describe: "readonly",
+        it: "readonly",
+        test: "readonly",
+        expect: "readonly",
+        beforeEach: "readonly",
+        afterEach: "readonly",
+        beforeAll: "readonly",
+        afterAll: "readonly",
+        // CommonJS globals
+        require: "readonly",
+        module: "readonly",
+        exports: "readonly",
+        __dirname: "readonly",
+        __filename: "readonly",
+        // URL globals
+        URLSearchParams: "readonly",
       },
     },
     plugins: {
@@ -107,9 +139,6 @@ export default [
     languageOptions: {
       ecmaVersion: "latest",
       sourceType: "module",
-      ecmaFeatures: {
-        jsx: true,
-      },
       globals: {
         // Browser globals
         window: "readonly",
